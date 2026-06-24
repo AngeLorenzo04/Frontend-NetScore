@@ -1,11 +1,5 @@
-'use client'
-
-import { ProfileView } from '@/components/netscore/profile-view'
+import { redirect } from 'next/navigation'
 
 export default function LoginPage() {
-  return (
-    <div className="flex min-h-dvh items-center justify-center bg-background">
-      <ProfileView />
-    </div>
-  )
+  redirect('/')
 }
