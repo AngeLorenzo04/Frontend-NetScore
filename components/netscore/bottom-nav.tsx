@@ -15,12 +15,17 @@ const TABS: { id: TabId; label: string; icon: typeof CalendarDays }[] = [
 export function BottomNav({
   active,
   onChange,
+  className,
 }: {
   active: TabId
   onChange: (tab: TabId) => void
+  className?: string
 }) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/80 backdrop-blur-xl">
+    <nav className={cn(
+      "fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/80 backdrop-blur-xl",
+      className
+    )}>
       <div className="mx-auto flex max-w-md items-stretch justify-around px-4 pb-[env(safe-area-inset-bottom)]">
         {TABS.map((tab) => {
           const isActive = active === tab.id

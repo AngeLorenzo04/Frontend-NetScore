@@ -6,7 +6,7 @@ import { Goal } from 'lucide-react'
 export function TopBar({ avatar }: { avatar: string }) {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/70 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-md items-center justify-between px-5">
+      <div className="mx-auto flex h-16 items-center justify-between px-5">
         <motion.div
           className="flex items-center gap-2"
           initial={{ opacity: 0, x: -12 }}
