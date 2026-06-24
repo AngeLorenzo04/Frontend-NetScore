@@ -11,18 +11,31 @@ export function MatchesView({
   onSubmitPrediction,
 }: {
   user: any
-  onSubmitPrediction: (matchId: string, home: number, away: number) => Promise<void>
+  onSubmitPrediction: (matchId: string, home: number, away: number, leagueId?: string) => Promise<void>
 }) {
   const [matches, setMatches] = useState<Match[]>([])
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null)
+
+  // Initialize selectedLeagueId with user's first league if not set
+  useEffect(() => {
+    if (user?.leagues && user.leagues.length > 0 && !selectedLeagueId) {
+      setSelectedLeagueId(user.leagues[0].id)
+    }
+  }, [user, selectedLeagueId])
 
   useEffect(() => {
     if (!user || !user.token) return
 
     let active = true
     setLoading(true)
-    fetch('http://localhost:3000/api/matches', {
+    
+    const url = selectedLeagueId
+      ? `http://localhost:3000/api/matches?leagueId=${selectedLeagueId}`
+      : 'http://localhost:3000/api/matches'
+
+    fetch(url, {
       headers: {
         Authorization: `Bearer ${user.token}`,
       },
@@ -41,7 +54,7 @@ export function MatchesView({
     return () => {
       active = false
     }
-  }, [user?.token])
+  }, [user?.token, selectedLeagueId])
 
   // Find all unique matchdays
   const matchdays = useMemo(() => {
@@ -64,18 +77,43 @@ export function MatchesView({
 
   return (
     <section className="px-5 py-5">
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-6"
-      >
-        <h1 className="text-2xl font-extrabold tracking-tight text-balance">
-          FIFA World Cup 26™ Matches
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Lock in your scores for each Matchday (Giornata) before kickoff.
-        </p>
-      </motion.div>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h1 className="text-2xl font-extrabold tracking-tight text-balance">
+            FIFA World Cup 26™ Matches
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Lock in your scores for each Matchday (Giornata) before kickoff.
+          </p>
+        </motion.div>
+
+        {/* League Selector */}
+        {user?.leagues && user.leagues.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-xs shrink-0"
+          >
+            <select
+              value={selectedLeagueId || ''}
+              onChange={(e) => {
+                setSelectedLeagueId(e.target.value)
+                setExpandedId(null)
+              }}
+              className="w-full h-11 rounded-xl border border-border bg-card px-3.5 text-sm font-semibold text-foreground outline-none focus:border-primary transition-colors cursor-pointer"
+            >
+              {user.leagues.map((l: any) => (
+                <option key={l.id} value={l.id}>
+                  Lega: {l.name}
+                </option>
+              ))}
+            </select>
+          </motion.div>
+        )}
+      </div>
 
       {/* Matchday Tabs / Sub-nav */}
       {matchdays.length > 0 && (
@@ -137,7 +175,7 @@ export function MatchesView({
                 onToggle={() =>
                   setExpandedId((prev) => (prev === match.id ? null : match.id))
                 }
-                onSubmit={onSubmitPrediction}
+                onSubmit={(mId, h, a) => onSubmitPrediction(mId, h, a, selectedLeagueId || undefined)}
               />
             ))
           )}
