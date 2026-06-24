@@ -1,6 +1,5 @@
 User-agent: *
-Allow: /$
-Disallow: /
+Allow: /
 
 # Host
 Host: https://netscore26.cloud
