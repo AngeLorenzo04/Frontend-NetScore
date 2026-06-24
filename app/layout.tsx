@@ -23,6 +23,9 @@ export const metadata: Metadata = {
     ],
     apple: '/icon.svg',
   },
+  verification: {
+    google: 'INSERISCI_QUI_IL_TUO_CODICE_VERIFICA_GOOGLE',
+  },
 }
 
 export const viewport: Viewport = {

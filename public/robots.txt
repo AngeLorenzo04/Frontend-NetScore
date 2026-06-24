@@ -4,3 +4,6 @@ Disallow: /
 
 # Host
 Host: https://netscore26.cloud
+
+# Sitemap
+Sitemap: https://netscore26.cloud/sitemap.xml
