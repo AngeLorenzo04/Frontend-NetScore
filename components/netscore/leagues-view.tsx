@@ -9,6 +9,8 @@ import { LEADERBOARD, UPCOMING_MATCHES, type Match, mapBackendMatch } from './da
 import { MatchCard } from './match-card'
 import { io } from 'socket.io-client'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+
 interface LeaguesViewProps {
   user: {
     id: string
@@ -60,7 +62,7 @@ export function LeaguesView({
 
     let active = true
     setLeaderboardLoading(true)
-    fetch(`http://localhost:3000/api/leagues/${selectedLeagueId}/leaderboard`, {
+    fetch(`${API_URL}/api/leagues/${selectedLeagueId}/leaderboard`, {
       headers: {
         Authorization: `Bearer ${user.token}`,
       },
@@ -85,7 +87,7 @@ export function LeaguesView({
   useEffect(() => {
     if (!selectedLeagueId) return
 
-    const socket = io('http://localhost:3000')
+    const socket = io(API_URL)
 
     socket.emit('joinLeague', selectedLeagueId)
 
@@ -125,7 +127,7 @@ export function LeaguesView({
 
     let active = true
     setMatchesLoading(true)
-    fetch(`http://localhost:3000/api/matches?leagueId=${selectedLeagueId}`, {
+    fetch(`${API_URL}/api/matches?leagueId=${selectedLeagueId}`, {
       headers: {
         Authorization: `Bearer ${user.token}`,
       },
@@ -506,43 +508,77 @@ export function LeaguesView({
                     Nessun partecipante in questa lega.
                   </div>
                 ) : (
-                  <ul className="flex flex-col gap-2">
+                  <ul className="flex flex-col gap-2.5 max-w-md mx-auto w-full list-none pl-0">
                     {leaderboard.map((member) => {
                       const isCurrentUser = member.isYou
+                      const isImage = member.avatar?.startsWith('http') || member.avatar?.startsWith('data:image')
+                      
+                      let rankBadge = null
+                      let cardClass = 'border-border bg-card/50 hover:bg-card/75'
+                      
+                      if (member.rank === 1) {
+                        rankBadge = (
+                          <div className="flex size-7 items-center justify-center rounded-lg bg-amber-400/15 text-amber-400 shadow-[0_0_8px_rgba(250,204,21,0.15)]">
+                            <Trophy className="size-4" strokeWidth={2.5} />
+                          </div>
+                        )
+                        cardClass = 'border-amber-400/25 bg-gradient-to-r from-amber-400/10 via-amber-400/5 to-card/50'
+                      } else if (member.rank === 2) {
+                        rankBadge = (
+                          <div className="flex size-7 items-center justify-center rounded-lg bg-slate-300/15 text-slate-300">
+                            <Award className="size-4" strokeWidth={2.5} />
+                          </div>
+                        )
+                        cardClass = 'border-slate-400/20 bg-gradient-to-r from-slate-400/8 via-slate-400/3 to-card/50'
+                      } else if (member.rank === 3) {
+                        rankBadge = (
+                          <div className="flex size-7 items-center justify-center rounded-lg bg-amber-700/20 text-amber-600">
+                            <Award className="size-4" strokeWidth={2.5} />
+                          </div>
+                        )
+                        cardClass = 'border-amber-700/20 bg-gradient-to-r from-amber-700/8 via-amber-700/3 to-card/50'
+                      } else {
+                        rankBadge = (
+                          <div className="flex size-7 items-center justify-center rounded-lg bg-secondary/80 text-xs font-black text-muted-foreground">
+                            {member.rank}
+                          </div>
+                        )
+                      }
+
+                      if (isCurrentUser && member.rank > 3) {
+                        cardClass = 'border-primary/45 bg-primary/8 shadow-[0_0_12px_oklch(0.58_0.23_250_/_0.12)]'
+                      }
+
                       return (
                         <motion.li
                           key={member.id}
                           initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
                           className={cn(
-                            'flex items-center gap-3 rounded-xl border px-4 py-3',
-                            isCurrentUser
-                              ? 'border-primary/50 bg-primary/10 shadow-[0_0_12px_oklch(0.58_0.23_250_/_0.2)]'
-                              : 'border-border bg-card/50'
+                            'flex items-center gap-3 rounded-2xl border px-4 py-3 transition-colors duration-200',
+                            cardClass
                           )}
                         >
-                          <span className="w-5 text-center text-xs font-black text-muted-foreground">
-                            {member.rank}
-                          </span>
+                          {rankBadge}
+                          
+                          <div className="relative flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-secondary overflow-hidden text-[10px] font-black">
+                            {isImage ? (
+                              <img src={member.avatar} alt="Avatar" className="size-full object-cover" />
+                            ) : (
+                              member.avatar
+                            )}
+                          </div>
+                          
                           <span
                             className={cn(
-                              'flex size-9 items-center justify-center rounded-full border text-[10px] font-black',
-                              isCurrentUser
-                                ? 'border-primary bg-primary/20 text-primary'
-                                : 'border-border bg-secondary text-muted-foreground'
+                              'flex-1 truncate text-xs font-bold text-foreground',
+                              isCurrentUser && 'text-primary font-black'
                             )}
                           >
-                            {member.avatar}
+                            {member.name} {isCurrentUser && <span className="ml-1 text-[9px] font-bold uppercase tracking-wider bg-primary/20 text-primary px-1.5 py-0.5 rounded-md">Tu</span>}
                           </span>
-                          <span
-                            className={cn(
-                              'flex-1 truncate text-xs font-bold',
-                              isCurrentUser && 'text-primary'
-                            )}
-                          >
-                            {member.name}
-                          </span>
-                          <span className="text-xs font-black tabular-nums">
+                          
+                          <span className="text-xs font-black tabular-nums text-foreground/95 bg-background/50 border border-border/40 px-2.5 py-1 rounded-xl">
                             {member.points.toLocaleString()} pts
                           </span>
                         </motion.li>

@@ -22,6 +22,8 @@ interface UserProfile {
   token: string
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+
 export function NetScoreApp() {
   const [tab, setTab] = useState<TabId>('matches')
   const [toast, setToast] = useState<string | null>(null)
@@ -48,7 +50,7 @@ export function NetScoreApp() {
   // Fetch updated user profile and leagues list
   const fetchProfile = useCallback(async (token: string) => {
     try {
-      const res = await fetch('http://localhost:3000/api/users/profile', {
+      const res = await fetch(`${API_URL}/api/users/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -117,7 +119,7 @@ export function NetScoreApp() {
       }
 
       try {
-        const res = await fetch('http://localhost:3000/api/leagues/join', {
+        const res = await fetch(`${API_URL}/api/leagues/join`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -147,7 +149,7 @@ export function NetScoreApp() {
       if (!user || !user.token) return 'Non autenticato'
 
       try {
-        const res = await fetch('http://localhost:3000/api/leagues', {
+        const res = await fetch(`${API_URL}/api/leagues`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -185,7 +187,7 @@ export function NetScoreApp() {
           body.avatarUrl = avatarUrl
         }
 
-        const res = await fetch('http://localhost:3000/api/users/profile', {
+        const res = await fetch(`${API_URL}/api/users/profile`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -220,7 +222,7 @@ export function NetScoreApp() {
       if (!user || !user.token) return
 
       try {
-        const res = await fetch('http://localhost:3000/api/predictions', {
+        const res = await fetch(`${API_URL}/api/predictions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

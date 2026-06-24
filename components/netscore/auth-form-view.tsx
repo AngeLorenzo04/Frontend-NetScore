@@ -54,9 +54,10 @@ export function AuthFormView({ onLogin }: { onLogin: (user: any, token: string) 
     setLoading(true)
     setError(null)
     try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
       const url = mode === 'login'
-        ? 'http://localhost:3000/api/auth/login'
-        : 'http://localhost:3000/api/auth/register'
+        ? `${apiUrl}/api/auth/login`
+        : `${apiUrl}/api/auth/register`
       
       const body = mode === 'login'
         ? { email, password }

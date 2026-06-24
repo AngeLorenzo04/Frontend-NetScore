@@ -31,9 +31,10 @@ export function MatchesView({
     let active = true
     setLoading(true)
     
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
     const url = selectedLeagueId
-      ? `http://localhost:3000/api/matches?leagueId=${selectedLeagueId}`
-      : 'http://localhost:3000/api/matches'
+      ? `${apiUrl}/api/matches?leagueId=${selectedLeagueId}`
+      : `${apiUrl}/api/matches`
 
     fetch(url, {
       headers: {
