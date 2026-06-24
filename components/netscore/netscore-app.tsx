@@ -8,8 +8,10 @@ import { MatchesView } from './matches-view'
 import { LeaguesView } from './leagues-view'
 import { ProfileView, type League } from './profile-view'
 import { AuthFormView } from './auth-form-view'
+import { Homepage } from './homepage'
 import { Toast } from './toast'
 import { cn } from '@/lib/utils'
+import { X } from 'lucide-react'
 
 interface UserProfile {
   id: string
@@ -29,6 +31,8 @@ export function NetScoreApp() {
   const [toast, setToast] = useState<string | null>(null)
   const [user, setUser] = useState<UserProfile | null>(null)
   const [isLoaded, setIsLoaded] = useState(false)
+  const [inPlatform, setInPlatform] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const showToast = useCallback((message: string) => {
@@ -214,6 +218,7 @@ export function NetScoreApp() {
 
   const handleLogout = useCallback(() => {
     saveUser(null)
+    setInPlatform(false)
     showToast('Logged out successfully')
   }, [saveUser, showToast])
 
@@ -260,54 +265,95 @@ export function NetScoreApp() {
     )
   }
 
-  if (!user) {
+  if (!inPlatform) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
-        <AuthFormView
-          onLogin={(backendUser, token) => {
-            const initials =
-              backendUser.nickname
-                .split(' ')
-                .map((n: string) => n[0])
-                .join('')
-                .toUpperCase()
-                .slice(0, 2) || 'US'
-
-            const mappedLeagues: League[] = (backendUser.leagues || []).map((l: any) => ({
-              id: l.id,
-              name: l.name,
-              code: l.code,
-              membersCount: l.memberCount ?? 1,
-              rank: l.rank ?? 1,
-              createdBy: l.creatorId === backendUser.id ? 'You' : 'Other player',
-            }))
-
-            const profile: UserProfile = {
-              id: backendUser.id,
-              name: backendUser.nickname,
-              email: backendUser.email,
-              avatar: initials,
-              avatarUrl: backendUser.avatarUrl,
-              points: backendUser.totalPoints ?? 0,
-              leagues: mappedLeagues,
-              token,
-            }
-            saveUser(profile)
-            setTab('matches')
-            showToast(`Benvenuto, ${backendUser.nickname}!`)
-          }}
+      <>
+        <Homepage
+          user={user}
+          onEnter={() => setInPlatform(true)}
+          onShowLogin={() => setShowAuthModal(true)}
+          onLogout={handleLogout}
         />
+
+        <AnimatePresence>
+          {showAuthModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-md"
+            >
+              <motion.div
+                initial={{ scale: 0.9, y: 15 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 15 }}
+                className="relative w-full max-w-md rounded-3xl border border-border bg-card p-4 shadow-2xl backdrop-blur-md overflow-hidden"
+              >
+                {/* Close Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowAuthModal(false)}
+                  className="absolute right-4 top-4 flex size-8 items-center justify-center rounded-full border border-border bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors z-50"
+                >
+                  <X className="size-4" />
+                </button>
+
+                <AuthFormView
+                  onLogin={(backendUser, token) => {
+                    const initials =
+                      backendUser.nickname
+                        .split(' ')
+                        .map((n: string) => n[0])
+                        .join('')
+                        .toUpperCase()
+                        .slice(0, 2) || 'US'
+
+                    const mappedLeagues: League[] = (backendUser.leagues || []).map((l: any) => ({
+                      id: l.id,
+                      name: l.name,
+                      code: l.code,
+                      membersCount: l.memberCount ?? 1,
+                      rank: l.rank ?? 1,
+                      createdBy: l.creatorId === backendUser.id ? 'You' : 'Other player',
+                    }))
+
+                    const profile: UserProfile = {
+                      id: backendUser.id,
+                      name: backendUser.nickname,
+                      email: backendUser.email,
+                      avatar: initials,
+                      avatarUrl: backendUser.avatarUrl,
+                      points: backendUser.totalPoints ?? 0,
+                      leagues: mappedLeagues,
+                      token,
+                    }
+                    saveUser(profile)
+                    setInPlatform(true)
+                    setShowAuthModal(false)
+                    setTab('matches')
+                    showToast(`Benvenuto, ${backendUser.nickname}!`)
+                  }}
+                />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <Toast message={toast} />
-      </div>
+      </>
     )
   }
 
   return (
     <div className="relative mx-auto flex min-h-dvh flex-col bg-background md:flex-row">
       <nav className="hidden w-64 border-r border-border p-4 md:block bg-card/40 backdrop-blur-md">
-        <h2 className="text-xl font-black tracking-wider text-foreground px-3 mb-6">
+        <button
+          type="button"
+          onClick={() => setInPlatform(false)}
+          className="text-xl font-black tracking-wider text-foreground px-3 mb-6 text-left hover:opacity-85 transition-opacity"
+        >
           NetScore<span className="text-primary font-extrabold">26</span>
-        </h2>
+        </button>
         <ul className="space-y-2">
           {TABS.map((tabItem) => (
             <li key={tabItem.id}>
