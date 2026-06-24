@@ -31,9 +31,13 @@ export function TopBar({ avatar }: { avatar: string }) {
           type="button"
           aria-label="Your profile"
           whileTap={{ scale: 0.9 }}
-          className="flex size-10 items-center justify-center rounded-full border border-border bg-secondary text-[11px] font-extrabold tracking-wide text-foreground shadow-[0_0_14px_oklch(0.58_0.23_250_/_0.35)]"
+          className="flex size-10 items-center justify-center rounded-full border border-border bg-secondary overflow-hidden text-[11px] font-extrabold tracking-wide text-foreground shadow-[0_0_14px_oklch(0.58_0.23_250_/_0.35)]"
         >
-          {avatar}
+          {avatar?.startsWith('http') || avatar?.startsWith('data:image') ? (
+            <img src={avatar} alt="Avatar" className="size-full object-cover" />
+          ) : (
+            avatar
+          )}
         </motion.button>
       </div>
     </header>

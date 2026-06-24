@@ -16,6 +16,7 @@ interface UserProfile {
   name: string
   email: string
   avatar: string
+  avatarUrl?: string
   points: number
   leagues: League[]
   token: string
@@ -76,6 +77,7 @@ export function NetScoreApp() {
           name: data.nickname,
           email: data.email,
           avatar: initials,
+          avatarUrl: data.avatarUrl,
           points: data.totalPoints ?? 0,
           leagues: mappedLeagues,
           token,
@@ -171,13 +173,16 @@ export function NetScoreApp() {
   )
 
   const handleUpdateProfile = useCallback(
-    async (nickname: string, email: string, password?: string): Promise<string | null> => {
+    async (nickname: string, email: string, password?: string, avatarUrl?: string): Promise<string | null> => {
       if (!user || !user.token) return 'Non autenticato'
 
       try {
         const body: any = { nickname, email }
         if (password) {
           body.password = password
+        }
+        if (avatarUrl !== undefined) {
+          body.avatarUrl = avatarUrl
         }
 
         const res = await fetch('http://localhost:3000/api/users/profile', {
@@ -280,6 +285,7 @@ export function NetScoreApp() {
               name: backendUser.nickname,
               email: backendUser.email,
               avatar: initials,
+              avatarUrl: backendUser.avatarUrl,
               points: backendUser.totalPoints ?? 0,
               leagues: mappedLeagues,
               token,
@@ -322,7 +328,7 @@ export function NetScoreApp() {
       </nav>
 
       <div className="flex flex-1 flex-col">
-        <TopBar avatar={user.avatar} />
+        <TopBar avatar={user.avatarUrl || user.avatar} />
 
         <main className="no-scrollbar flex-1 overflow-y-auto pb-24 md:pb-0">
           <AnimatePresence mode="wait">

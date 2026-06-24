@@ -591,7 +591,7 @@ export function LeaguesView({
                     )}
 
                     {/* Matches Grid inside League */}
-                    <div className="flex flex-col gap-4 max-w-md mx-auto w-full">
+                    <ul className="flex flex-col gap-4 max-w-md mx-auto w-full list-none pl-0">
                       {filteredMatches.length === 0 ? (
                         <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground text-xs">
                           Nessuna partita in programma per la Giornata {selectedMatchday}.
@@ -610,7 +610,7 @@ export function LeaguesView({
                           />
                         ))
                       )}
-                    </div>
+                    </ul>
                   </div>
                 )
               )}

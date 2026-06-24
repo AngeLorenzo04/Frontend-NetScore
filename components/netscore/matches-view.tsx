@@ -111,16 +111,16 @@ export function MatchesView({
 
       {/* Matches Grid */}
       <AnimatePresence mode="wait">
-        <motion.div
+        <motion.ul
           key={selectedMatchday}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.2 }}
-          className="flex flex-col gap-4 max-w-md mx-auto"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto list-none pl-0 w-full"
         >
           {loading ? (
-            <div className="flex justify-center py-12">
+            <div className="col-span-full flex justify-center py-12">
               <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent shadow-[0_0_12px_oklch(0.58_0.23_250_/_0.3)]" />
             </div>
           ) : filteredMatches.length === 0 ? (
@@ -141,7 +141,7 @@ export function MatchesView({
               />
             ))
           )}
-        </motion.div>
+        </motion.ul>
       </AnimatePresence>
     </section>
   )

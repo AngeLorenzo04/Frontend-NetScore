@@ -31,13 +31,14 @@ export function ProfileView({
     name: string
     email: string
     avatar: string
+    avatarUrl?: string
     points: number
     leagues: League[]
   }
   onLogout?: () => void
   onJoinLeague?: (code: string) => Promise<string | null>
   onCreateLeague?: (name: string) => Promise<string | null>
-  onUpdateProfile?: (nickname: string, email: string, password?: string) => Promise<string | null>
+  onUpdateProfile?: (nickname: string, email: string, password?: string, avatarUrl?: string) => Promise<string | null>
 }) {
   const [showJoinForm, setShowJoinForm] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -81,6 +82,18 @@ export function ProfileView({
     navigator.clipboard.writeText(code)
     setCopiedCode(code)
     setTimeout(() => setCopiedCode(null), 2000)
+  }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onloadend = async () => {
+      const base64String = reader.result as string
+      await onUpdateProfile(user.name, user.email, undefined, base64String)
+    }
+    reader.readAsDataURL(file)
   }
 
   const handleJoinSubmit = async (e: React.FormEvent) => {
@@ -207,15 +220,31 @@ export function ProfileView({
             ) : (
               <>
                 {/* Avatar with animated glowing rings */}
-                <div className="relative mb-4">
-                  <motion.div
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute inset-0 rounded-full bg-primary/20 blur-sm"
+                <div className="relative mb-4 group cursor-pointer">
+                  <input
+                    type="file"
+                    id="avatar-upload"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
                   />
-                  <div className="relative flex size-20 items-center justify-center rounded-full border-2 border-primary bg-secondary text-2xl font-black text-foreground shadow-[0_0_20px_oklch(0.58_0.23_250_/_0.3)]">
-                    {user.avatar}
-                  </div>
+                  <label htmlFor="avatar-upload" className="cursor-pointer">
+                    <motion.div
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                      className="absolute inset-0 rounded-full bg-primary/20 blur-sm group-hover:bg-primary/35 transition-colors"
+                    />
+                    <div className="relative flex size-20 items-center justify-center rounded-full border-2 border-primary bg-secondary overflow-hidden text-2xl font-black text-foreground shadow-[0_0_20px_oklch(0.58_0.23_250_/_0.3)] hover:opacity-90 transition-opacity">
+                      {user.avatarUrl ? (
+                        <img src={user.avatarUrl} alt="Avatar" className="size-full object-cover" />
+                      ) : (
+                        user.avatar
+                      )}
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Plus className="size-5 text-white" />
+                      </div>
+                    </div>
+                  </label>
                 </div>
 
                 <h1 className="text-2xl font-extrabold tracking-tight text-foreground">{user.name}</h1>
