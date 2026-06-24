@@ -96,7 +96,7 @@ export function MatchesView({
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="w-full max-w-xs shrink-0"
+            className="w-full md:max-w-xs shrink-0"
           >
             <select
               value={selectedLeagueId || ''}
@@ -104,7 +104,7 @@ export function MatchesView({
                 setSelectedLeagueId(e.target.value)
                 setExpandedId(null)
               }}
-              className="w-full h-11 rounded-xl border border-border bg-card px-3.5 text-sm font-semibold text-foreground outline-none focus:border-primary transition-colors cursor-pointer"
+              className="w-full h-11 rounded-xl border border-border bg-card pl-3.5 pr-10 text-sm font-semibold text-foreground outline-none focus:border-primary transition-colors cursor-pointer"
             >
               {user.leagues.map((l: any) => (
                 <option key={l.id} value={l.id}>
