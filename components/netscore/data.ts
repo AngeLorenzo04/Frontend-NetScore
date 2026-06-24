@@ -201,15 +201,25 @@ function getVenueForTeam(name: string): string {
 }
 
 function getStageForMatch(date: Date): string {
-  // Simple heuristic: before June 25 is Group Stage
-  const day = date.getUTCDate();
-  const month = date.getUTCMonth() + 1;
-  if (month === 6 && day <= 25) {
-    // Generate Group based on day of week or something
-    const groups = ['Group A', 'Group B', 'Group C', 'Group D', 'Group E', 'Group F'];
-    return groups[date.getDay() % groups.length];
+  const phase = getPhaseForMatch(date);
+  if (phase.startsWith('Gironi')) {
+    const groups = ['Gruppo A', 'Gruppo B', 'Gruppo C', 'Gruppo D', 'Gruppo E', 'Gruppo F'];
+    return groups[date.getUTCDate() % groups.length];
   }
-  return 'Ottavi di Finale';
+  switch (phase) {
+    case 'Sedicesimi':
+      return 'Sedicesimi di Finale';
+    case 'Ottavi':
+      return 'Ottavi di Finale';
+    case 'Quarti':
+      return 'Quarti di Finale';
+    case 'Semifinale':
+      return 'Semifinale';
+    case 'Finale':
+      return 'Finale';
+    default:
+      return 'Fase a Gironi';
+  }
 }
 
 function getMatchdayForDate(date: Date): number {
