@@ -58,54 +58,54 @@
   color-scheme: dark;
   --radius: 1rem;
 
-  /* FIFA World Cup 2026 inspired dark theme - netscore */
-  --background: oklch(0.13 0.045 280);
-  --foreground: oklch(0.97 0.01 280);
-  --card: oklch(0.18 0.05 280);
-  --card-foreground: oklch(0.97 0.01 280);
-  --popover: oklch(0.18 0.05 280);
-  --popover-foreground: oklch(0.97 0.01 280);
+  /* Premium Midnight Slate & Royal Blue theme */
+  --background: oklch(0.12 0.015 250);
+  --foreground: oklch(0.98 0.005 250);
+  --card: oklch(0.16 0.02 250);
+  --card-foreground: oklch(0.98 0.005 250);
+  --popover: oklch(0.16 0.02 250);
+  --popover-foreground: oklch(0.98 0.005 250);
 
-  /* Neon green as primary brand */
-  --primary: oklch(0.86 0.24 145);
-  --primary-foreground: oklch(0.16 0.05 280);
+  /* Electric Royal Blue as primary brand */
+  --primary: oklch(0.58 0.23 250);
+  --primary-foreground: oklch(0.98 0.005 250);
 
-  --secondary: oklch(0.24 0.06 285);
-  --secondary-foreground: oklch(0.97 0.01 280);
-  --muted: oklch(0.24 0.06 285);
-  --muted-foreground: oklch(0.72 0.04 285);
-  --accent: oklch(0.7 0.2 330);
-  --accent-foreground: oklch(0.16 0.05 280);
-  --destructive: oklch(0.65 0.24 25);
+  --secondary: oklch(0.21 0.025 250);
+  --secondary-foreground: oklch(0.92 0.01 250);
+  --muted: oklch(0.21 0.025 250);
+  --muted-foreground: oklch(0.68 0.02 250);
+  --accent: oklch(0.76 0.13 85);
+  --accent-foreground: oklch(0.12 0.015 250);
+  --destructive: oklch(0.58 0.18 20);
 
-  --border: oklch(0.97 0.05 280 / 12%);
-  --input: oklch(0.97 0.05 280 / 14%);
-  --ring: oklch(0.86 0.24 145);
+  --border: oklch(0.98 0.005 250 / 8%);
+  --input: oklch(0.98 0.005 250 / 10%);
+  --ring: oklch(0.58 0.23 250);
 
-  /* Neon accents */
-  --neon-green: oklch(0.86 0.24 145);
-  --neon-magenta: oklch(0.7 0.27 340);
-  --neon-cyan: oklch(0.83 0.16 200);
+  /* Accents */
+  --neon-green: oklch(0.72 0.16 145);
+  --neon-magenta: oklch(0.62 0.22 320);
+  --neon-cyan: oklch(0.70 0.17 210);
 
   /* Podium */
-  --gold: oklch(0.85 0.16 90);
-  --silver: oklch(0.85 0.02 280);
-  --bronze: oklch(0.7 0.12 55);
+  --gold: oklch(0.76 0.13 85);
+  --silver: oklch(0.85 0.01 250);
+  --bronze: oklch(0.65 0.10 50);
 
-  --chart-1: oklch(0.86 0.24 145);
-  --chart-2: oklch(0.7 0.27 340);
-  --chart-3: oklch(0.83 0.16 200);
-  --chart-4: oklch(0.85 0.16 90);
-  --chart-5: oklch(0.7 0.12 55);
+  --chart-1: oklch(0.58 0.23 250);
+  --chart-2: oklch(0.76 0.13 85);
+  --chart-3: oklch(0.70 0.17 210);
+  --chart-4: oklch(0.72 0.16 145);
+  --chart-5: oklch(0.65 0.10 50);
 
-  --sidebar: oklch(0.16 0.05 280);
-  --sidebar-foreground: oklch(0.97 0.01 280);
-  --sidebar-primary: oklch(0.86 0.24 145);
-  --sidebar-primary-foreground: oklch(0.16 0.05 280);
-  --sidebar-accent: oklch(0.24 0.06 285);
-  --sidebar-accent-foreground: oklch(0.97 0.01 280);
-  --sidebar-border: oklch(0.97 0.05 280 / 12%);
-  --sidebar-ring: oklch(0.86 0.24 145);
+  --sidebar: oklch(0.14 0.018 250);
+  --sidebar-foreground: oklch(0.98 0.005 250);
+  --sidebar-primary: oklch(0.58 0.23 250);
+  --sidebar-primary-foreground: oklch(0.98 0.005 250);
+  --sidebar-accent: oklch(0.21 0.025 250);
+  --sidebar-accent-foreground: oklch(0.98 0.005 250);
+  --sidebar-border: oklch(0.98 0.005 250 / 8%);
+  --sidebar-ring: oklch(0.58 0.23 250);
 }
 
 @layer base {

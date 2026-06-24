@@ -437,7 +437,7 @@ export function LeaguesView({
                         className={cn(
                           'flex items-center gap-3 rounded-xl border px-4 py-3',
                           isCurrentUser
-                            ? 'border-primary/50 bg-primary/10 shadow-[0_0_12px_oklch(0.86_0.24_145_/_0.2)]'
+                            ? 'border-primary/50 bg-primary/10 shadow-[0_0_12px_oklch(0.58_0.23_250_/_0.2)]'
                             : 'border-border bg-card/50'
                         )}
                       >
@@ -503,7 +503,7 @@ export function LeaguesView({
                   </div>
 
                   {/* Matches Grid inside League */}
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="flex flex-col gap-4 max-w-md mx-auto w-full">
                     {filteredMatches.map((match, idx) => (
                       <MatchCard
                         key={match.id}

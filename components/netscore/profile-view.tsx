@@ -103,7 +103,7 @@ export function ProfileView({
                 transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                 className="absolute inset-0 rounded-full bg-primary/20 blur-sm"
               />
-              <div className="relative flex size-20 items-center justify-center rounded-full border-2 border-primary bg-secondary text-2xl font-black text-foreground shadow-[0_0_20px_oklch(0.86_0.24_145_/_0.3)]">
+              <div className="relative flex size-20 items-center justify-center rounded-full border-2 border-primary bg-secondary text-2xl font-black text-foreground shadow-[0_0_20px_oklch(0.58_0.23_250_/_0.3)]">
                 {user.avatar}
               </div>
             </div>
@@ -296,7 +296,7 @@ export function ProfileView({
                   </button>
                   <button
                     type="submit"
-                    className="h-9 rounded-xl bg-primary px-4 text-xs font-bold text-primary-foreground shadow-[0_0_12px_oklch(0.86_0.24_145_/_0.4)]"
+                    className="h-9 rounded-xl bg-primary px-4 text-xs font-bold text-primary-foreground shadow-[0_0_12px_oklch(0.58_0.23_250_/_0.4)]"
                   >
                     Submit
                   </button>
@@ -349,7 +349,7 @@ export function ProfileView({
                   </button>
                   <button
                     type="submit"
-                    className="h-9 rounded-xl bg-primary px-4 text-xs font-bold text-primary-foreground shadow-[0_0_12px_oklch(0.86_0.24_145_/_0.4)]"
+                    className="h-9 rounded-xl bg-primary px-4 text-xs font-bold text-primary-foreground shadow-[0_0_12px_oklch(0.58_0.23_250_/_0.4)]"
                   >
                     Create
                   </button>

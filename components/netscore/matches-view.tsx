@@ -74,7 +74,7 @@ export function MatchesView({
                 {isActive && (
                   <motion.span
                     layoutId="matchday-glow"
-                    className="absolute inset-0 rounded-xl bg-primary/10 border border-primary/20 shadow-[0_0_12px_oklch(0.86_0.24_145_/_0.2)]"
+                    className="absolute inset-0 rounded-xl bg-primary/10 border border-primary/20 shadow-[0_0_12px_oklch(0.58_0.23_250_/_0.2)]"
                     transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                   />
                 )}
@@ -93,7 +93,7 @@ export function MatchesView({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.2 }}
-          className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
+          className="flex flex-col gap-4 max-w-md mx-auto"
         >
           {filteredMatches.length === 0 ? (
             <div className="col-span-full rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">

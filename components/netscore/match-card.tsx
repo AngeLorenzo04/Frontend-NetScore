@@ -143,8 +143,23 @@ export function MatchCard({
 
       <div className="p-4">
         {status === 'done' ? (
-          <div className="flex items-center justify-center gap-2 rounded-2xl border border-primary/40 bg-primary/10 py-3 text-sm font-bold text-primary">
-            <Check className="size-4" /> Predicted {home} – {away}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-center gap-2 rounded-2xl border border-primary/20 bg-primary/5 py-3 text-sm font-bold text-primary">
+              <Check className="size-4" /> Predicted {home} – {away}
+            </div>
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.96 }}
+              onClick={() => {
+                setStatus('idle')
+                if (!expanded) {
+                  onToggle()
+                }
+              }}
+              className="w-full rounded-2xl border border-border bg-secondary/40 py-2.5 text-xs font-bold text-foreground hover:bg-secondary transition-colors"
+            >
+              Modifica Predizione
+            </motion.button>
           </div>
         ) : (
           <motion.button
@@ -155,7 +170,7 @@ export function MatchCard({
               'w-full rounded-2xl py-3 text-sm font-bold transition-colors',
               expanded
                 ? 'bg-secondary text-foreground'
-                : 'bg-primary text-primary-foreground shadow-[0_0_18px_oklch(0.86_0.24_145_/_0.45)]',
+                : 'bg-primary text-primary-foreground shadow-[0_0_18px_oklch(0.58_0.23_250_/_0.4)]',
             )}
           >
             {expanded ? 'Cancel' : 'Predict Now'}

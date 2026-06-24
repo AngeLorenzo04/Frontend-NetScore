@@ -130,7 +130,7 @@ export function NetScoreApp() {
   if (!isLoaded) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-background">
-        <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent shadow-[0_0_12px_oklch(0.86_0.24_145_/_0.3)]" />
+        <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent shadow-[0_0_12px_oklch(0.58_0.23_250_/_0.3)]" />
       </div>
     )
   }
@@ -177,7 +177,7 @@ export function NetScoreApp() {
                 className={cn(
                   'flex w-full items-center gap-2 rounded-xl px-3 py-3.5 text-left text-sm font-bold transition-colors',
                   tab === tabItem.id
-                    ? 'bg-primary text-primary-foreground shadow-[0_0_14px_oklch(0.86_0.24_145_/_0.4)]'
+                    ? 'bg-primary text-primary-foreground shadow-[0_0_14px_oklch(0.58_0.23_250_/_0.4)]'
                     : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground',
                 )}
               >

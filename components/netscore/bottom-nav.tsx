@@ -42,7 +42,7 @@ export function BottomNav({
               {isActive && (
                 <motion.span
                   layoutId="nav-glow"
-                  className="absolute -top-px h-0.5 w-10 rounded-full bg-primary shadow-[0_0_12px_oklch(0.86_0.24_145_/_0.9)]"
+                  className="absolute -top-px h-0.5 w-10 rounded-full bg-primary shadow-[0_0_12px_oklch(0.58_0.23_250_/_0.9)]"
                   transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                 />
               )}
@@ -50,7 +50,7 @@ export function BottomNav({
                 className={cn(
                   'size-6 transition-colors',
                   isActive
-                    ? 'text-primary drop-shadow-[0_0_8px_oklch(0.86_0.24_145_/_0.7)]'
+                    ? 'text-primary drop-shadow-[0_0_8px_oklch(0.58_0.23_250_/_0.7)]'
                     : 'text-muted-foreground',
                 )}
                 strokeWidth={isActive ? 2.5 : 2}

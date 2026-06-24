@@ -29,7 +29,7 @@ function FloatingInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder=" "
-        className="peer h-14 w-full rounded-2xl border border-border bg-card/70 pl-11 pr-4 pt-4 text-sm font-medium text-foreground outline-none backdrop-blur-md transition-colors focus:border-primary focus:shadow-[0_0_16px_oklch(0.86_0.24_145_/_0.3)]"
+        className="peer h-14 w-full rounded-2xl border border-border bg-card/70 pl-11 pr-4 pt-4 text-sm font-medium text-foreground outline-none backdrop-blur-md transition-colors focus:border-primary focus:shadow-[0_0_16px_oklch(0.58_0.23_250_/_0.3)]"
       />
       <label
         htmlFor={id}
@@ -66,7 +66,7 @@ export function AuthFormView({ onLogin }: { onLogin: (name: string, email: strin
         className="mx-auto flex max-w-sm flex-col items-center"
       >
         <div className="mb-6 flex flex-col items-center">
-          <div className="flex size-16 items-center justify-center rounded-3xl bg-primary text-primary-foreground shadow-[0_0_24px_oklch(0.86_0.24_145_/_0.5)]">
+          <div className="flex size-16 items-center justify-center rounded-3xl bg-primary text-primary-foreground shadow-[0_0_24px_oklch(0.58_0.23_250_/_0.5)]">
             <Goal className="size-8" strokeWidth={2.5} />
           </div>
           <h1 className="mt-3 text-2xl font-extrabold tracking-tight">
@@ -91,7 +91,7 @@ export function AuthFormView({ onLogin }: { onLogin: (name: string, email: strin
               {mode === m && (
                 <motion.span
                   layoutId="auth-toggle"
-                  className="absolute inset-0 rounded-xl bg-primary shadow-[0_0_14px_oklch(0.86_0.24_145_/_0.4)]"
+                  className="absolute inset-0 rounded-xl bg-primary shadow-[0_0_14px_oklch(0.58_0.23_250_/_0.4)]"
                   transition={{ type: 'spring', stiffness: 360, damping: 28 }}
                 />
               )}
@@ -149,7 +149,7 @@ export function AuthFormView({ onLogin }: { onLogin: (name: string, email: strin
             type="submit"
             whileTap={{ scale: 0.96 }}
             disabled={loading}
-            className="mt-2 flex h-14 items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-bold text-primary-foreground shadow-[0_0_20px_oklch(0.86_0.24_145_/_0.45)] disabled:opacity-70"
+            className="mt-2 flex h-14 items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-bold text-primary-foreground shadow-[0_0_20px_oklch(0.58_0.23_250_/_0.45)] disabled:opacity-70"
           >
             {loading ? (
               <Loader2 className="size-5 animate-spin" />
