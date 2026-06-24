@@ -12,6 +12,7 @@ export type Match = {
   kickoff: string
   venue: string
   stage: string
+  matchday: number
 }
 
 export type LeaderUser = {
@@ -43,6 +44,7 @@ export const UPCOMING_MATCHES: Match[] = [
     kickoff: 'Today · 20:00',
     venue: 'MetLife Stadium, NJ',
     stage: 'Group A',
+    matchday: 1,
   },
   {
     id: 'm2',
@@ -51,6 +53,7 @@ export const UPCOMING_MATCHES: Match[] = [
     kickoff: 'Today · 22:30',
     venue: 'SoFi Stadium, LA',
     stage: 'Group C',
+    matchday: 1,
   },
   {
     id: 'm3',
@@ -59,6 +62,7 @@ export const UPCOMING_MATCHES: Match[] = [
     kickoff: 'Tomorrow · 18:00',
     venue: 'AT&T Stadium, Dallas',
     stage: 'Group B',
+    matchday: 2,
   },
   {
     id: 'm4',
@@ -67,6 +71,7 @@ export const UPCOMING_MATCHES: Match[] = [
     kickoff: 'Tomorrow · 21:00',
     venue: 'Estadio Azteca, MX',
     stage: 'Group D',
+    matchday: 2,
   },
   {
     id: 'm5',
@@ -75,6 +80,7 @@ export const UPCOMING_MATCHES: Match[] = [
     kickoff: 'Sat · 19:30',
     venue: 'BC Place, Vancouver',
     stage: 'Group F',
+    matchday: 3,
   },
 ]
 

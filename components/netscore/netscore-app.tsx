@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { TopBar } from './top-bar'
 import { BottomNav, type TabId, TABS } from './bottom-nav'
 import { MatchesView } from './matches-view'
-import { LeaderboardView } from './leaderboard-view'
+import { LeaguesView } from './leagues-view'
 import { ProfileView, type League } from './profile-view'
 import { AuthFormView } from './auth-form-view'
 import { Toast } from './toast'
@@ -204,7 +204,14 @@ export function NetScoreApp() {
               {tab === 'matches' && (
                 <MatchesView onSubmitPrediction={submitPrediction} />
               )}
-              {tab === 'leaderboard' && <LeaderboardView />}
+              {tab === 'leagues' && (
+                <LeaguesView
+                  user={user}
+                  onSubmitPrediction={submitPrediction}
+                  onJoinLeague={handleJoinLeague}
+                  onCreateLeague={handleCreateLeague}
+                />
+              )}
               {tab === 'profile' && (
                 <ProfileView
                   user={user}

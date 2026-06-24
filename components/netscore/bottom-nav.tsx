@@ -4,11 +4,11 @@ import { motion } from 'motion/react'
 import { CalendarDays, Trophy, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-export type TabId = 'matches' | 'leaderboard' | 'profile'
+export type TabId = 'matches' | 'leagues' | 'profile'
 
 export const TABS: { id: TabId; label: string; icon: typeof CalendarDays }[] = [
   { id: 'matches', label: 'Matches', icon: CalendarDays },
-  { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
+  { id: 'leagues', label: 'Leghe', icon: Trophy },
   { id: 'profile', label: 'Profile', icon: User },
 ]
 
