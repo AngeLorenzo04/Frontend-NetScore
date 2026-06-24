@@ -12,6 +12,7 @@ export interface League {
   membersCount: number
   rank: number
   createdBy: string
+  creatorId?: string
 }
 
 export function ProfileView({

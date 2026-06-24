@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Trophy, Users, Award, ArrowLeft, Key, Plus, Copy, Check, AlertCircle, Sparkles, ChevronRight, CalendarDays, X, Maximize2 } from 'lucide-react'
+import { Trophy, Users, Award, ArrowLeft, Key, Plus, Copy, Check, AlertCircle, Sparkles, ChevronRight, CalendarDays, X, Maximize2, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { League } from './profile-view'
 import { LEADERBOARD, UPCOMING_MATCHES, type Match, mapBackendMatch } from './data'
@@ -24,6 +24,7 @@ interface LeaguesViewProps {
   onSubmitPrediction: (matchId: string, home: number, away: number, leagueId?: string) => Promise<void>
   onJoinLeague: (code: string) => Promise<string | null>
   onCreateLeague: (name: string) => Promise<string | null>
+  onDeleteLeague?: (leagueId: string) => Promise<string | null>
 }
 
 export function LeaguesView({
@@ -31,6 +32,7 @@ export function LeaguesView({
   onSubmitPrediction,
   onJoinLeague,
   onCreateLeague,
+  onDeleteLeague,
 }: LeaguesViewProps) {
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | null>(null)
   const [leagueSubTab, setLeagueSubTab] = useState<'classifica' | 'predizioni'>('classifica')
@@ -41,6 +43,7 @@ export function LeaguesView({
   const [joinError, setJoinError] = useState<string | null>(null)
   const [createError, setCreateError] = useState<string | null>(null)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
+  const [confirmDeleteLeagueId, setConfirmDeleteLeagueId] = useState<string | null>(null)
 
   // Other user profile modal state
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
@@ -498,20 +501,34 @@ export function LeaguesView({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1 rounded-lg border border-border bg-background/80 px-2 py-1 text-xs font-mono font-bold tracking-wide">
-                    <span className="text-muted-foreground">CODE:</span>
-                    <span>{selectedLeague.code}</span>
-                    <button
-                      type="button"
-                      onClick={(e) => handleCopyCode(selectedLeague.code, e)}
-                      className="ml-1 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
-                    >
-                      {copiedCode === selectedLeague.code ? (
-                        <Check className="size-3 text-primary" />
-                      ) : (
-                        <Copy className="size-3" />
-                      )}
-                    </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-1 rounded-lg border border-border bg-background/80 px-2 py-1 text-xs font-mono font-bold tracking-wide">
+                      <span className="text-muted-foreground">CODE:</span>
+                      <span>{selectedLeague.code}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => handleCopyCode(selectedLeague.code, e)}
+                        className="ml-1 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
+                      >
+                        {copiedCode === selectedLeague.code ? (
+                          <Check className="size-3 text-primary" />
+                        ) : (
+                          <Copy className="size-3" />
+                        )}
+                      </button>
+                    </div>
+
+                    {selectedLeague.creatorId === user.id && onDeleteLeague && (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteLeagueId(selectedLeague.id)}
+                        className="flex items-center gap-1.5 rounded-lg border border-destructive/20 bg-destructive/10 px-2.5 py-1 text-xs font-bold text-destructive hover:bg-destructive/20 transition-all active:scale-95"
+                        title="Elimina definitivamente questa lega"
+                      >
+                        <Trash2 className="size-3.5" />
+                        Elimina
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -850,6 +867,68 @@ export function LeaguesView({
               >
                 <X className="size-4" />
               </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete League Confirmation Modal */}
+      <AnimatePresence>
+        {confirmDeleteLeagueId && (
+          <motion.div
+            key="delete-league-confirm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setConfirmDeleteLeagueId(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 15 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-sm rounded-3xl border border-destructive/20 bg-card p-6 shadow-2xl overflow-hidden"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive mb-4">
+                  <AlertCircle className="size-6" />
+                </div>
+
+                <h3 className="text-lg font-black text-foreground tracking-tight">
+                  Elimina Lega
+                </h3>
+                <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+                  Sei sicuro di voler eliminare definitivamente questa lega? Questa azione è irreversibile e comporterà la perdita di tutti i partecipanti e delle loro predizioni.
+                </p>
+
+                <div className="mt-6 flex w-full gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDeleteLeagueId(null)}
+                    className="flex-1 rounded-xl border border-border bg-secondary/30 py-2.5 text-xs font-bold text-foreground hover:bg-secondary/50 transition-colors"
+                  >
+                    Annulla
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (onDeleteLeague && confirmDeleteLeagueId) {
+                        const err = await onDeleteLeague(confirmDeleteLeagueId)
+                        if (!err) {
+                          setSelectedLeagueId(null)
+                        } else {
+                          console.error(err)
+                        }
+                      }
+                      setConfirmDeleteLeagueId(null)
+                    }}
+                    className="flex-1 rounded-xl bg-destructive py-2.5 text-xs font-bold text-white hover:bg-destructive/90 transition-colors shadow-lg shadow-destructive/20"
+                  >
+                    Elimina
+                  </button>
+                </div>
+              </div>
             </motion.div>
           </motion.div>
         )}

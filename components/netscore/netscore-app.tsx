@@ -76,6 +76,7 @@ export function NetScoreApp() {
           membersCount: l.memberCount ?? 1,
           rank: l.rank ?? 1,
           createdBy: l.creatorId === data.id ? 'You' : 'Other player',
+          creatorId: l.creatorId,
         }))
 
         const profile: UserProfile = {
@@ -169,6 +170,34 @@ export function NetScoreApp() {
 
         await fetchProfile(user.token)
         showToast(`Lega creata: ${name}`)
+        return null
+      } catch (err) {
+        console.error(err)
+        return 'Errore di connessione'
+      }
+    },
+    [user, fetchProfile, showToast],
+  )
+
+  const handleDeleteLeague = useCallback(
+    async (leagueId: string): Promise<string | null> => {
+      if (!user || !user.token) return 'Non autenticato'
+
+      try {
+        const res = await fetch(`${API_URL}/api/leagues/${leagueId}`, {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        })
+
+        const data = await res.json()
+        if (!res.ok) {
+          return data.error || 'Impossibile eliminare la lega'
+        }
+
+        await fetchProfile(user.token)
+        showToast('Lega eliminata con successo')
         return null
       } catch (err) {
         console.error(err)
@@ -315,6 +344,7 @@ export function NetScoreApp() {
                       membersCount: l.memberCount ?? 1,
                       rank: l.rank ?? 1,
                       createdBy: l.creatorId === backendUser.id ? 'You' : 'Other player',
+                      creatorId: l.creatorId,
                     }))
 
                     const profile: UserProfile = {
@@ -396,6 +426,7 @@ export function NetScoreApp() {
                   onSubmitPrediction={submitPrediction}
                   onJoinLeague={handleJoinLeague}
                   onCreateLeague={handleCreateLeague}
+                  onDeleteLeague={handleDeleteLeague}
                 />
               )}
               {tab === 'profile' && (
