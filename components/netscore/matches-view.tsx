@@ -3,21 +3,45 @@
 import { useEffect, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { MatchCard } from './match-card'
-import { UPCOMING_MATCHES, type Match } from './data'
+import { UPCOMING_MATCHES, type Match, mapBackendMatch } from './data'
 import { cn } from '@/lib/utils'
 
 export function MatchesView({
+  user,
   onSubmitPrediction,
 }: {
+  user: any
   onSubmitPrediction: (matchId: string, home: number, away: number) => Promise<void>
 }) {
-  const [matches, setMatches] = useState<Match[]>(UPCOMING_MATCHES)
+  const [matches, setMatches] = useState<Match[]>([])
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // TODO: Connect to backend API (GET /api/matches/upcoming)
-    setMatches(UPCOMING_MATCHES)
-  }, [])
+    if (!user || !user.token) return
+
+    let active = true
+    setLoading(true)
+    fetch('http://localhost:3000/api/matches', {
+      headers: {
+        Authorization: `Bearer ${user.token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && active) {
+          setMatches(data.map(mapBackendMatch))
+        }
+      })
+      .catch((err) => console.error('Error fetching matches:', err))
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [user?.token])
 
   // Find all unique matchdays
   const matchdays = useMemo(() => {
@@ -95,9 +119,13 @@ export function MatchesView({
           transition={{ duration: 0.2 }}
           className="flex flex-col gap-4 max-w-md mx-auto"
         >
-          {filteredMatches.length === 0 ? (
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent shadow-[0_0_12px_oklch(0.58_0.23_250_/_0.3)]" />
+            </div>
+          ) : filteredMatches.length === 0 ? (
             <div className="col-span-full rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
-              No matches scheduled for Giornata {selectedMatchday}.
+              Nessuna partita in programma per la Giornata {selectedMatchday}.
             </div>
           ) : (
             filteredMatches.map((match, index) => (

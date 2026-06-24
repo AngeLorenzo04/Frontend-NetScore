@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Loader2, Mail, Lock, User, ArrowRight, Goal } from 'lucide-react'
+import { Loader2, Mail, Lock, User, ArrowRight, Goal, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 function FloatingInput({
@@ -41,21 +41,44 @@ function FloatingInput({
   )
 }
 
-export function AuthFormView({ onLogin }: { onLogin: (name: string, email: string) => void }) {
+export function AuthFormView({ onLogin }: { onLogin: (user: any, token: string) => void }) {
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    // TODO: Connect to backend API (POST /api/auth/login | /api/auth/register)
     setLoading(true)
-    setTimeout(() => {
+    setError(null)
+    try {
+      const url = mode === 'login'
+        ? 'http://localhost:3000/api/auth/login'
+        : 'http://localhost:3000/api/auth/register'
+      
+      const body = mode === 'login'
+        ? { email, password }
+        : { email, nickname: name, password }
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'Si è verificato un errore.')
+      }
+
+      onLogin(data.user, data.token)
+    } catch (err: any) {
+      setError(err.message || 'Errore di connessione al server.')
+    } finally {
       setLoading(false)
-      onLogin(mode === 'register' ? (name || 'New Predictor') : (name || email.split('@')[0] || 'User'), email)
-    }, 1200)
+    }
   }
 
   return (
@@ -144,6 +167,14 @@ export function AuthFormView({ onLogin }: { onLogin: (name: string, email: strin
             value={password}
             onChange={setPassword}
           />
+
+
+          {error && (
+            <div className="flex items-center gap-2 rounded-2xl border border-destructive/25 bg-destructive/10 px-4 py-3 text-xs font-semibold text-destructive mt-1">
+              <AlertCircle className="size-4 shrink-0" />
+              {error}
+            </div>
+          )}
 
           <motion.button
             type="submit"

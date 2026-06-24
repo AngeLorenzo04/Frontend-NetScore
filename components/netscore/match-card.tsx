@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Loader2, Minus, Plus, Clock, MapPin, Check } from 'lucide-react'
 import type { Match } from './data'
@@ -91,21 +91,55 @@ export function MatchCard({
   onToggle,
   onSubmit,
 }: {
-  match: Match
+  match: Match & {
+    status?: string
+    homeGoals?: number | null
+    awayGoals?: number | null
+    prediction?: {
+      predictedHome: number
+      predictedAway: number
+      pointsEarned: number | null
+    } | null
+  }
   index: number
   expanded: boolean
   onToggle: () => void
   onSubmit: (matchId: string, home: number, away: number) => Promise<void>
 }) {
-  const [home, setHome] = useState(0)
-  const [away, setAway] = useState(0)
-  const [status, setStatus] = useState<'idle' | 'loading' | 'done'>('idle')
+  const initialHome = match.prediction ? match.prediction.predictedHome : 0
+  const initialAway = match.prediction ? match.prediction.predictedAway : 0
+  const initialStatus = match.prediction ? 'done' : 'idle'
+
+  const [home, setHome] = useState(initialHome)
+  const [away, setAway] = useState(initialAway)
+  const [status, setStatus] = useState<'idle' | 'loading' | 'done'>(initialStatus)
+
+  // Sync state if prediction prop updates externally
+  useEffect(() => {
+    if (match.prediction) {
+      setHome(match.prediction.predictedHome)
+      setAway(match.prediction.predictedAway)
+      setStatus('done')
+    } else {
+      if (status === 'done') {
+        setHome(0)
+        setAway(0)
+        setStatus('idle')
+      }
+    }
+  }, [match.prediction])
 
   async function handleSubmit() {
     setStatus('loading')
-    await onSubmit(match.id, home, away)
-    setStatus('done')
+    try {
+      await onSubmit(match.id, home, away)
+      setStatus('done')
+    } catch (err) {
+      setStatus('idle')
+    }
   }
+
+  const isFinished = match.status === 'FINISHED'
 
   return (
     <motion.li
@@ -126,13 +160,15 @@ export function MatchCard({
         </span>
         <span className="flex items-center gap-1 text-xs font-semibold text-accent">
           <Clock className="size-3" />
-          {match.kickoff}
+          {isFinished ? 'Terminata' : match.kickoff}
         </span>
       </div>
 
       <div className="flex items-center gap-2 px-4 py-3">
         <TeamBadge flag={match.home.flag} name={match.home.name} align="left" />
-        <span className="px-1 text-sm font-black text-muted-foreground">VS</span>
+        <span className="px-1 text-sm font-black text-muted-foreground">
+          {isFinished ? `${match.homeGoals} - ${match.awayGoals}` : 'VS'}
+        </span>
         <TeamBadge flag={match.away.flag} name={match.away.name} align="right" />
       </div>
 
@@ -142,10 +178,30 @@ export function MatchCard({
       </div>
 
       <div className="p-4">
-        {status === 'done' ? (
+        {isFinished ? (
+          <div className="flex flex-col gap-2">
+            {match.prediction ? (
+              <div className={cn(
+                "flex items-center justify-between rounded-2xl border px-4 py-3 text-sm font-bold",
+                match.prediction.pointsEarned && match.prediction.pointsEarned > 0
+                  ? "border-primary/20 bg-primary/5 text-primary shadow-[0_0_12px_oklch(0.58_0.23_250_/_0.1)]"
+                  : "border-border bg-secondary/35 text-muted-foreground"
+              )}>
+                <span className="truncate">Predizione: {match.prediction.predictedHome} – {match.prediction.predictedAway}</span>
+                <span className="rounded-full bg-background px-2.5 py-0.5 text-xs font-black shrink-0">
+                  +{match.prediction.pointsEarned ?? 0} {match.prediction.pointsEarned === 1 ? 'Punto' : 'Punti'}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-card/30 py-3 text-xs text-muted-foreground">
+                Nessuna predizione effettuata
+              </div>
+            )}
+          </div>
+        ) : status === 'done' ? (
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-center gap-2 rounded-2xl border border-primary/20 bg-primary/5 py-3 text-sm font-bold text-primary">
-              <Check className="size-4" /> Predicted {home} – {away}
+              <Check className="size-4" /> Predetto {home} – {away}
             </div>
             <motion.button
               type="button"
@@ -173,12 +229,12 @@ export function MatchCard({
                 : 'bg-primary text-primary-foreground shadow-[0_0_18px_oklch(0.58_0.23_250_/_0.4)]',
             )}
           >
-            {expanded ? 'Cancel' : 'Predict Now'}
+            {expanded ? 'Annulla' : 'Predici Ora'}
           </motion.button>
         )}
 
         <AnimatePresence initial={false}>
-          {expanded && status !== 'done' && (
+          {expanded && status !== 'done' && !isFinished && (
             <motion.div
               key="predict"
               initial={{ height: 0, opacity: 0 }}
@@ -204,10 +260,10 @@ export function MatchCard({
               >
                 {status === 'loading' ? (
                   <>
-                    <Loader2 className="size-4 animate-spin" /> Submitting…
+                    <Loader2 className="size-4 animate-spin" /> Invio in corso…
                   </>
                 ) : (
-                  'Submit Prediction'
+                  'Salva Predizione'
                 )}
               </motion.button>
             </motion.div>

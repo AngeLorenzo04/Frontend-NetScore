@@ -12,17 +12,14 @@ import { Toast } from './toast'
 import { cn } from '@/lib/utils'
 
 interface UserProfile {
+  id: string
   name: string
   email: string
   avatar: string
   points: number
   leagues: League[]
+  token: string
 }
-
-const DEFAULT_LEAGUES: League[] = [
-  { id: 'l1', name: 'Global Fans League', code: 'GLOBAL26', membersCount: 12450, rank: 342, createdBy: 'NetScore' },
-  { id: 'l2', name: 'Family & Friends', code: 'FAM2026', membersCount: 8, rank: 2, createdBy: 'Kai R.' }
-]
 
 export function NetScoreApp() {
   const [tab, setTab] = useState<TabId>('matches')
@@ -37,19 +34,6 @@ export function NetScoreApp() {
     toastTimer.current = setTimeout(() => setToast(null), 2600)
   }, [])
 
-  // Load user session on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('netscore_user')
-    if (saved) {
-      try {
-        setUser(JSON.parse(saved))
-      } catch (e) {
-        console.error('Error loading session:', e)
-      }
-    }
-    setIsLoaded(true)
-  }, [])
-
   // Save session when updated
   const saveUser = useCallback((newUser: UserProfile | null) => {
     setUser(newUser)
@@ -60,71 +44,170 @@ export function NetScoreApp() {
     }
   }, [])
 
-  const handleJoinLeague = useCallback((code: string) => {
-    if (!user) return 'Not authenticated'
-    const cleanCode = code.trim().toUpperCase()
+  // Fetch updated user profile and leagues list
+  const fetchProfile = useCallback(async (token: string) => {
+    try {
+      const res = await fetch('http://localhost:3000/api/users/profile', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const initials =
+          data.nickname
+            .split(' ')
+            .map((n: string) => n[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2) || 'US'
 
-    if (user.leagues.some((l) => l.code === cleanCode)) {
-      return 'You are already a member of this league'
+        const mappedLeagues: League[] = (data.leagues || []).map((l: any) => ({
+          id: l.id,
+          name: l.name,
+          code: l.code,
+          membersCount: l.memberCount ?? 1,
+          rank: l.rank ?? 1,
+          createdBy: l.creatorId === data.id ? 'You' : 'Other player',
+        }))
+
+        const profile: UserProfile = {
+          id: data.id,
+          name: data.nickname,
+          email: data.email,
+          avatar: initials,
+          points: data.totalPoints ?? 0,
+          leagues: mappedLeagues,
+          token,
+        }
+        setUser(profile)
+        localStorage.setItem('netscore_user', JSON.stringify(profile))
+      }
+    } catch (e) {
+      console.error('Error fetching user profile:', e)
     }
+  }, [])
 
-    // Mock league database resolution
-    let name = `League ${cleanCode}`
-    if (cleanCode === 'COPA26') name = 'Copa de Amigos'
-    if (cleanCode === 'MILAN26') name = 'Rossoneri Predictors'
-    if (cleanCode === 'FANS2026') name = 'World Cup 26 Fans'
-
-    const newLeague: League = {
-      id: `l_${Date.now()}`,
-      name,
-      code: cleanCode,
-      membersCount: Math.floor(Math.random() * 45) + 6,
-      rank: Math.floor(Math.random() * 6) + 2,
-      createdBy: 'Other player',
+  // Load user session on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('netscore_user')
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        setUser(parsed)
+        if (parsed.token) {
+          fetchProfile(parsed.token)
+        }
+      } catch (e) {
+        console.error('Error loading session:', e)
+      }
     }
+    setIsLoaded(true)
+  }, [fetchProfile])
 
-    const updated = {
-      ...user,
-      leagues: [...user.leagues, newLeague],
-    }
-    saveUser(updated)
-    showToast(`Joined league: ${name}`)
-    return null
-  }, [user, saveUser, showToast])
+  const handleJoinLeague = useCallback(
+    async (code: string): Promise<string | null> => {
+      if (!user || !user.token) return 'Non autenticato'
+      const cleanCode = code.trim().toUpperCase()
 
-  const handleCreateLeague = useCallback((name: string) => {
-    if (!user) return
-    const randomCode = 'NET-' + Math.random().toString(36).substring(2, 6).toUpperCase()
-    const newLeague: League = {
-      id: `l_${Date.now()}`,
-      name,
-      code: randomCode,
-      membersCount: 1,
-      rank: 1,
-      createdBy: 'You',
-    }
+      if (user.leagues.some((l) => l.code === cleanCode)) {
+        return 'Fai già parte di questa lega'
+      }
 
-    const updated = {
-      ...user,
-      leagues: [...user.leagues, newLeague],
-    }
-    saveUser(updated)
-    showToast(`Created league: ${name}`)
-  }, [user, saveUser, showToast])
+      try {
+        const res = await fetch('http://localhost:3000/api/leagues/join', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user.token}`,
+          },
+          body: JSON.stringify({ code: cleanCode }),
+        })
+
+        const data = await res.json()
+        if (!res.ok) {
+          return data.error || 'Impossibile unirsi alla lega'
+        }
+
+        await fetchProfile(user.token)
+        showToast(`Unito alla lega: ${data.name || cleanCode}`)
+        return null
+      } catch (err) {
+        console.error(err)
+        return 'Errore di connessione'
+      }
+    },
+    [user, fetchProfile, showToast],
+  )
+
+  const handleCreateLeague = useCallback(
+    async (name: string): Promise<string | null> => {
+      if (!user || !user.token) return 'Non autenticato'
+
+      try {
+        const res = await fetch('http://localhost:3000/api/leagues', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user.token}`,
+          },
+          body: JSON.stringify({ name }),
+        })
+
+        const data = await res.json()
+        if (!res.ok) {
+          return data.error || 'Impossibile creare la lega'
+        }
+
+        await fetchProfile(user.token)
+        showToast(`Lega creata: ${name}`)
+        return null
+      } catch (err) {
+        console.error(err)
+        return 'Errore di connessione'
+      }
+    },
+    [user, fetchProfile, showToast],
+  )
 
   const handleLogout = useCallback(() => {
     saveUser(null)
     showToast('Logged out successfully')
   }, [saveUser, showToast])
 
-  // Mock submitPrediction: simulates an API call with a loading delay.
   const submitPrediction = useCallback(
-    async (matchId: string, home: number, away: number) => {
-      // TODO: Connect to backend API (POST /api/predictions)
-      await new Promise((resolve) => setTimeout(resolve, 1300))
-      showToast(`Prediction locked in: ${home} – ${away}`)
+    async (matchId: string, home: number, away: number, leagueId?: string) => {
+      if (!user || !user.token) return
+
+      try {
+        const res = await fetch('http://localhost:3000/api/predictions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user.token}`,
+          },
+          body: JSON.stringify({
+            matchId,
+            predictedHome: home,
+            predictedAway: away,
+            leagueId,
+          }),
+        })
+
+        const data = await res.json()
+        if (!res.ok) {
+          showToast(data.error || 'Errore nel salvataggio della predizione')
+          throw new Error(data.error || 'Prediction failed')
+        }
+
+        showToast(`Predizione salvata: ${home} – ${away}`)
+        await fetchProfile(user.token)
+      } catch (err) {
+        console.error(err)
+        throw err
+      }
     },
-    [showToast],
+    [user, fetchProfile, showToast],
   )
 
   if (!isLoaded) {
@@ -139,22 +222,36 @@ export function NetScoreApp() {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
         <AuthFormView
-          onLogin={(name, email) => {
-            const initials = name
-              .split(' ')
-              .map((n) => n[0])
-              .join('')
-              .toUpperCase()
-              .slice(0, 2) || 'US'
-            saveUser({
-              name,
-              email,
+          onLogin={(backendUser, token) => {
+            const initials =
+              backendUser.nickname
+                .split(' ')
+                .map((n: string) => n[0])
+                .join('')
+                .toUpperCase()
+                .slice(0, 2) || 'US'
+
+            const mappedLeagues: League[] = (backendUser.leagues || []).map((l: any) => ({
+              id: l.id,
+              name: l.name,
+              code: l.code,
+              membersCount: l.memberCount ?? 1,
+              rank: l.rank ?? 1,
+              createdBy: l.creatorId === backendUser.id ? 'You' : 'Other player',
+            }))
+
+            const profile: UserProfile = {
+              id: backendUser.id,
+              name: backendUser.nickname,
+              email: backendUser.email,
               avatar: initials,
-              points: 1320,
-              leagues: DEFAULT_LEAGUES,
-            })
+              points: backendUser.totalPoints ?? 0,
+              leagues: mappedLeagues,
+              token,
+            }
+            saveUser(profile)
             setTab('matches')
-            showToast(`Welcome back, ${name}!`)
+            showToast(`Benvenuto, ${backendUser.nickname}!`)
           }}
         />
         <Toast message={toast} />
@@ -202,7 +299,7 @@ export function NetScoreApp() {
               transition={{ duration: 0.22 }}
             >
               {tab === 'matches' && (
-                <MatchesView onSubmitPrediction={submitPrediction} />
+                <MatchesView user={user} onSubmitPrediction={submitPrediction} />
               )}
               {tab === 'leagues' && (
                 <LeaguesView

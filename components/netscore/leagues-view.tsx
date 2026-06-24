@@ -1,24 +1,27 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Trophy, Users, Award, ArrowLeft, Key, Plus, Copy, Check, AlertCircle, Sparkles, ChevronRight, CalendarDays } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { League } from './profile-view'
-import { LEADERBOARD, UPCOMING_MATCHES, type Match } from './data'
+import { LEADERBOARD, UPCOMING_MATCHES, type Match, mapBackendMatch } from './data'
 import { MatchCard } from './match-card'
+import { io } from 'socket.io-client'
 
 interface LeaguesViewProps {
   user: {
+    id: string
     name: string
     email: string
     avatar: string
     points: number
     leagues: League[]
+    token: string
   }
-  onSubmitPrediction: (matchId: string, home: number, away: number) => Promise<void>
-  onJoinLeague: (code: string) => string | null
-  onCreateLeague: (name: string) => void
+  onSubmitPrediction: (matchId: string, home: number, away: number, leagueId?: string) => Promise<void>
+  onJoinLeague: (code: string) => Promise<string | null>
+  onCreateLeague: (name: string) => Promise<string | null>
 }
 
 export function LeaguesView({
@@ -37,6 +40,112 @@ export function LeaguesView({
   const [createError, setCreateError] = useState<string | null>(null)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
 
+  // Real-time states
+  const [leaderboard, setLeaderboard] = useState<any[]>([])
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false)
+  const [leagueMatches, setLeagueMatches] = useState<Match[]>([])
+  const [matchesLoading, setMatchesLoading] = useState(false)
+
+  // Find the currently selected league
+  const selectedLeague = useMemo(() => {
+    return user.leagues.find((l) => l.id === selectedLeagueId) || null
+  }, [user.leagues, selectedLeagueId])
+
+  // Fetch leaderboard data when selected league changes
+  useEffect(() => {
+    if (!selectedLeagueId || !user.token) {
+      setLeaderboard([])
+      return
+    }
+
+    let active = true
+    setLeaderboardLoading(true)
+    fetch(`http://localhost:3000/api/leagues/${selectedLeagueId}/leaderboard`, {
+      headers: {
+        Authorization: `Bearer ${user.token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && active) {
+          setLeaderboard(data)
+        }
+      })
+      .catch((err) => console.error('Error fetching leaderboard:', err))
+      .finally(() => {
+        if (active) setLeaderboardLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [selectedLeagueId, user.token])
+
+  // Socket connection for real-time updates
+  useEffect(() => {
+    if (!selectedLeagueId) return
+
+    const socket = io('http://localhost:3000')
+
+    socket.emit('joinLeague', selectedLeagueId)
+
+    socket.on('leaderboardUpdate', (updatedLeaderboard: any) => {
+      setLeaderboard(
+        updatedLeaderboard.map((m: any, index: number) => {
+          const initials = m.nickname
+            .split(' ')
+            .map((n: string) => n[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2) || 'US'
+
+          return {
+            id: m.userId,
+            name: m.nickname,
+            avatar: initials,
+            points: m.totalPoints,
+            rank: index + 1,
+            trend: 'same',
+            isYou: m.userId === user.id,
+          }
+        })
+      )
+    })
+
+    return () => {
+      socket.disconnect()
+    }
+  }, [selectedLeagueId, user.id])
+
+  // Fetch matches for the selected league
+  useEffect(() => {
+    if (!selectedLeagueId || !user.token || leagueSubTab !== 'predizioni') {
+      return
+    }
+
+    let active = true
+    setMatchesLoading(true)
+    fetch(`http://localhost:3000/api/matches?leagueId=${selectedLeagueId}`, {
+      headers: {
+        Authorization: `Bearer ${user.token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && active) {
+          setLeagueMatches(data.map(mapBackendMatch))
+        }
+      })
+      .catch((err) => console.error('Error fetching league matches:', err))
+      .finally(() => {
+        if (active) setMatchesLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [selectedLeagueId, user.token, leagueSubTab])
+
   const handleCopyCode = (code: string, e: React.MouseEvent) => {
     e.stopPropagation()
     navigator.clipboard.writeText(code)
@@ -44,75 +153,33 @@ export function LeaguesView({
     setTimeout(() => setCopiedCode(null), 2000)
   }
 
-  // Find the currently selected league
-  const selectedLeague = useMemo(() => {
-    return user.leagues.find((l) => l.id === selectedLeagueId) || null
-  }, [user.leagues, selectedLeagueId])
-
-  // Generate dynamic leaderboard members based on the selected league
-  const leagueMembers = useMemo(() => {
-    if (!selectedLeague) return []
-    if (selectedLeague.code === 'GLOBAL26') {
-      // Map the global leaderboard from data.ts
-      return LEADERBOARD.map((item) => ({
-        id: item.id,
-        name: item.name,
-        avatar: item.avatar,
-        points: item.points,
-        trend: item.trend,
-        isYou: item.name === 'You',
-      }))
-    }
-
-    // Default mock members list including the current user
-    const baseMembers = [
-      { id: 'm_you', name: 'You', avatar: user.avatar, points: user.points, isYou: true },
-      { id: 'm_1', name: 'Sofia M.', avatar: 'SM', points: 1420, isYou: false },
-      { id: 'm_2', name: 'Kai R.', avatar: 'KR', points: 1350, isYou: false },
-      { id: 'm_3', name: 'Diego A.', avatar: 'DA', points: 1180, isYou: false },
-      { id: 'm_4', name: 'Amara O.', avatar: 'AO', points: 980, isYou: false },
-      { id: 'm_5', name: 'Leo P.', avatar: 'LP', points: 850, isYou: false },
-    ]
-
-    // Slice or filter based on membersCount
-    const actualCount = selectedLeague.membersCount
-    let sliced = baseMembers.slice(0, Math.max(1, actualCount))
-
-    // Ensure the current user "You" is always included in the list
-    if (!sliced.some((m) => m.isYou)) {
-      sliced.push({ id: 'm_you', name: 'You', avatar: user.avatar, points: user.points, isYou: true })
-    }
-
-    // Sort by points descending
-    sliced.sort((a, b) => b.points - a.points)
-
-    return sliced.map((m, index) => ({
-      ...m,
-      rank: index + 1,
-      trend: 'same' as const,
-    }))
-  }, [selectedLeague, user])
-
   // Group matches by matchday (giornata) for the predictions sub-tab
   const matchdays = useMemo(() => {
-    const days = UPCOMING_MATCHES.map((m) => m.matchday)
+    const days = leagueMatches.map((m) => m.matchday)
     return Array.from(new Set(days)).sort((a, b) => a - b)
-  }, [])
+  }, [leagueMatches])
 
   const [selectedMatchday, setSelectedMatchday] = useState<number>(1)
   const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null)
 
-  const filteredMatches = useMemo(() => {
-    return UPCOMING_MATCHES.filter((m) => m.matchday === selectedMatchday)
-  }, [selectedMatchday])
+  // Sync selected matchday with available matchdays if needed
+  useEffect(() => {
+    if (matchdays.length > 0 && !matchdays.includes(selectedMatchday)) {
+      setSelectedMatchday(matchdays[0])
+    }
+  }, [matchdays, selectedMatchday])
 
-  const handleJoinSubmit = (e: React.FormEvent) => {
+  const filteredMatches = useMemo(() => {
+    return leagueMatches.filter((m) => m.matchday === selectedMatchday)
+  }, [leagueMatches, selectedMatchday])
+
+  const handleJoinSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!joinCode.trim()) {
       setJoinError('Please enter a valid league code')
       return
     }
-    const err = onJoinLeague(joinCode.trim().toUpperCase())
+    const err = await onJoinLeague(joinCode.trim().toUpperCase())
     if (err) {
       setJoinError(err)
     } else {
@@ -122,7 +189,7 @@ export function LeaguesView({
     }
   }
 
-  const handleCreateSubmit = (e: React.FormEvent) => {
+  const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newLeagueName.trim()) {
       setCreateError('Please enter a league name')
@@ -132,10 +199,14 @@ export function LeaguesView({
       setCreateError('League name must be at least 3 characters')
       return
     }
-    onCreateLeague(newLeagueName.trim())
-    setNewLeagueName('')
-    setCreateError(null)
-    setShowCreateForm(false)
+    const err = await onCreateLeague(newLeagueName.trim())
+    if (err) {
+      setCreateError(err)
+    } else {
+      setNewLeagueName('')
+      setCreateError(null)
+      setShowCreateForm(false)
+    }
   }
 
   return (
@@ -426,98 +497,122 @@ export function LeaguesView({
             <div>
               {leagueSubTab === 'classifica' ? (
                 /* Classifica (Leaderboard) */
-                <ul className="flex flex-col gap-2">
-                  {leagueMembers.map((member) => {
-                    const isCurrentUser = member.isYou
-                    return (
-                      <motion.li
-                        key={member.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={cn(
-                          'flex items-center gap-3 rounded-xl border px-4 py-3',
-                          isCurrentUser
-                            ? 'border-primary/50 bg-primary/10 shadow-[0_0_12px_oklch(0.58_0.23_250_/_0.2)]'
-                            : 'border-border bg-card/50'
-                        )}
-                      >
-                        <span className="w-5 text-center text-xs font-black text-muted-foreground">
-                          {member.rank}
-                        </span>
-                        <span
-                          className={cn(
-                            'flex size-9 items-center justify-center rounded-full border text-[10px] font-black',
-                            isCurrentUser
-                              ? 'border-primary bg-primary/20 text-primary'
-                              : 'border-border bg-secondary text-muted-foreground'
-                          )}
-                        >
-                          {member.avatar}
-                        </span>
-                        <span
-                          className={cn(
-                            'flex-1 truncate text-xs font-bold',
-                            isCurrentUser && 'text-primary'
-                          )}
-                        >
-                          {member.name}
-                        </span>
-                        <span className="text-xs font-black tabular-nums">
-                          {member.points.toLocaleString()} pts
-                        </span>
-                      </motion.li>
-                    )
-                  })}
-                </ul>
-              ) : (
-                /* Predizioni (Match List) */
-                <div className="flex flex-col gap-4">
-                  {/* Matchday Select in League */}
-                  <div className="flex gap-2 border-b border-border/20 pb-2 overflow-x-auto no-scrollbar">
-                    {matchdays.map((day) => {
-                      const isActive = selectedMatchday === day
+                leaderboardLoading && leaderboard.length === 0 ? (
+                  <div className="flex justify-center py-12">
+                    <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent shadow-[0_0_12px_oklch(0.58_0.23_250_/_0.3)]" />
+                  </div>
+                ) : leaderboard.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground text-xs">
+                    Nessun partecipante in questa lega.
+                  </div>
+                ) : (
+                  <ul className="flex flex-col gap-2">
+                    {leaderboard.map((member) => {
+                      const isCurrentUser = member.isYou
                       return (
-                        <button
-                          key={day}
-                          type="button"
-                          onClick={() => {
-                            setSelectedMatchday(day)
-                            setExpandedMatchId(null)
-                          }}
+                        <motion.li
+                          key={member.id}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
                           className={cn(
-                            'relative px-3.5 py-1.5 text-xs font-bold transition-colors whitespace-nowrap rounded-lg',
-                            isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                            'flex items-center gap-3 rounded-xl border px-4 py-3',
+                            isCurrentUser
+                              ? 'border-primary/50 bg-primary/10 shadow-[0_0_12px_oklch(0.58_0.23_250_/_0.2)]'
+                              : 'border-border bg-card/50'
                           )}
                         >
-                          {isActive && (
-                            <motion.span
-                              layoutId="league-matchday-glow"
-                              className="absolute inset-0 rounded-lg bg-primary/10 border border-primary/20"
-                              transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                            />
-                          )}
-                          <span className="relative z-10">Giornata {day}</span>
-                        </button>
+                          <span className="w-5 text-center text-xs font-black text-muted-foreground">
+                            {member.rank}
+                          </span>
+                          <span
+                            className={cn(
+                              'flex size-9 items-center justify-center rounded-full border text-[10px] font-black',
+                              isCurrentUser
+                                ? 'border-primary bg-primary/20 text-primary'
+                                : 'border-border bg-secondary text-muted-foreground'
+                            )}
+                          >
+                            {member.avatar}
+                          </span>
+                          <span
+                            className={cn(
+                              'flex-1 truncate text-xs font-bold',
+                              isCurrentUser && 'text-primary'
+                            )}
+                          >
+                            {member.name}
+                          </span>
+                          <span className="text-xs font-black tabular-nums">
+                            {member.points.toLocaleString()} pts
+                          </span>
+                        </motion.li>
                       )
                     })}
+                  </ul>
+                )
+              ) : (
+                /* Predizioni (Match List) */
+                matchesLoading && leagueMatches.length === 0 ? (
+                  <div className="flex justify-center py-12">
+                    <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent shadow-[0_0_12px_oklch(0.58_0.23_250_/_0.3)]" />
                   </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {/* Matchday Select in League */}
+                    {matchdays.length > 0 && (
+                      <div className="flex gap-2 border-b border-border/20 pb-2 overflow-x-auto no-scrollbar">
+                        {matchdays.map((day) => {
+                          const isActive = selectedMatchday === day
+                          return (
+                            <button
+                              key={day}
+                              type="button"
+                              onClick={() => {
+                                setSelectedMatchday(day)
+                                setExpandedMatchId(null)
+                              }}
+                              className={cn(
+                                'relative px-3.5 py-1.5 text-xs font-bold transition-colors whitespace-nowrap rounded-lg',
+                                isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                              )}
+                            >
+                              {isActive && (
+                                <motion.span
+                                  layoutId="league-matchday-glow"
+                                  className="absolute inset-0 rounded-lg bg-primary/10 border border-primary/20"
+                                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                                />
+                              )}
+                              <span className="relative z-10">Giornata {day}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
 
-                  {/* Matches Grid inside League */}
-                  <div className="flex flex-col gap-4 max-w-md mx-auto w-full">
-                    {filteredMatches.map((match, idx) => (
-                      <MatchCard
-                        key={match.id}
-                        match={match}
-                        index={idx}
-                        expanded={expandedMatchId === match.id}
-                        onToggle={() =>
-                          setExpandedMatchId((prev) => (prev === match.id ? null : match.id))
-                        }
-                        onSubmit={onSubmitPrediction}
-                      />
-                    ))}
+                    {/* Matches Grid inside League */}
+                    <div className="flex flex-col gap-4 max-w-md mx-auto w-full">
+                      {filteredMatches.length === 0 ? (
+                        <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground text-xs">
+                          Nessuna partita in programma per la Giornata {selectedMatchday}.
+                        </div>
+                      ) : (
+                        filteredMatches.map((match, idx) => (
+                          <MatchCard
+                            key={match.id}
+                            match={match}
+                            index={idx}
+                            expanded={expandedMatchId === match.id}
+                            onToggle={() =>
+                              setExpandedMatchId((prev) => (prev === match.id ? null : match.id))
+                            }
+                            onSubmit={(mId, h, a) => onSubmitPrediction(mId, h, a, selectedLeague.id)}
+                          />
+                        ))
+                      )}
+                    </div>
                   </div>
-                </div>
+                )
               )}
             </div>
           </motion.div>

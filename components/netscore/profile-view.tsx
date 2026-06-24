@@ -23,8 +23,8 @@ export function ProfileView({
     leagues: []
   },
   onLogout = () => {},
-  onJoinLeague = () => null,
-  onCreateLeague = () => {},
+  onJoinLeague = async () => null,
+  onCreateLeague = async () => null,
 }: {
   user?: {
     name: string
@@ -34,8 +34,8 @@ export function ProfileView({
     leagues: League[]
   }
   onLogout?: () => void
-  onJoinLeague?: (code: string) => string | null
-  onCreateLeague?: (name: string) => void
+  onJoinLeague?: (code: string) => Promise<string | null>
+  onCreateLeague?: (name: string) => Promise<string | null>
 }) {
   const [showJoinForm, setShowJoinForm] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -51,13 +51,13 @@ export function ProfileView({
     setTimeout(() => setCopiedCode(null), 2000)
   }
 
-  const handleJoinSubmit = (e: React.FormEvent) => {
+  const handleJoinSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!joinCode.trim()) {
       setJoinError('Please enter a valid league code')
       return
     }
-    const err = onJoinLeague(joinCode.trim().toUpperCase())
+    const err = await onJoinLeague(joinCode.trim().toUpperCase())
     if (err) {
       setJoinError(err)
     } else {
@@ -67,7 +67,7 @@ export function ProfileView({
     }
   }
 
-  const handleCreateSubmit = (e: React.FormEvent) => {
+  const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newLeagueName.trim()) {
       setCreateError('Please enter a league name')
@@ -77,10 +77,14 @@ export function ProfileView({
       setCreateError('League name must be at least 3 characters')
       return
     }
-    onCreateLeague(newLeagueName.trim())
-    setNewLeagueName('')
-    setCreateError(null)
-    setShowCreateForm(false)
+    const err = await onCreateLeague(newLeagueName.trim())
+    if (err) {
+      setCreateError(err)
+    } else {
+      setNewLeagueName('')
+      setCreateError(null)
+      setShowCreateForm(false)
+    }
   }
 
   return (
