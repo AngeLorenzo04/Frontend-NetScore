@@ -140,6 +140,8 @@ export function MatchCard({
   }
 
   const isFinished = match.status === 'FINISHED'
+  const isTBD = (match.home.name && match.home.name.toUpperCase() === 'TBD') || 
+                (match.away.name && match.away.name.toUpperCase() === 'TBD')
 
   return (
     <motion.li
@@ -198,6 +200,14 @@ export function MatchCard({
               </div>
             )}
           </div>
+        ) : isTBD ? (
+          <button
+            type="button"
+            disabled
+            className="w-full rounded-2xl bg-secondary/35 border border-dashed border-border/80 py-3 text-sm font-bold text-muted-foreground cursor-not-allowed"
+          >
+            In attesa dei partecipanti (TBD)
+          </button>
         ) : status === 'done' ? (
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-center gap-2 rounded-2xl border border-primary/20 bg-primary/5 py-3 text-sm font-bold text-primary">
@@ -234,7 +244,7 @@ export function MatchCard({
         )}
 
         <AnimatePresence initial={false}>
-          {expanded && status !== 'done' && !isFinished && (
+          {expanded && status !== 'done' && !isFinished && !isTBD && (
             <motion.div
               key="predict"
               initial={{ height: 0, opacity: 0 }}
