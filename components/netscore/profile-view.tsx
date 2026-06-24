@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { User, Plus, Key, Trophy, LogOut, Check, Copy, AlertCircle, Sparkles, Users, Award, Settings } from 'lucide-react'
+import { User, Plus, Key, Trophy, LogOut, Check, Copy, AlertCircle, Sparkles, Users, Award, Settings, X, Maximize2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface League {
@@ -53,6 +53,7 @@ export function ProfileView({
   const [editEmail, setEditEmail] = useState(user.email)
   const [editPassword, setEditPassword] = useState('')
   const [editError, setEditError] = useState<string | null>(null)
+  const [zoomAvatar, setZoomAvatar] = useState(false)
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -219,8 +220,8 @@ export function ProfileView({
               </form>
             ) : (
               <>
-                {/* Avatar with animated glowing rings */}
-                <div className="relative mb-4 group cursor-pointer">
+                {/* Avatar with animated glowing rings and zoom functionality */}
+                <div className="relative mb-4">
                   <input
                     type="file"
                     id="avatar-upload"
@@ -228,22 +229,35 @@ export function ProfileView({
                     className="hidden"
                     onChange={handleFileChange}
                   />
-                  <label htmlFor="avatar-upload" className="cursor-pointer">
-                    <motion.div
-                      animate={{ scale: [1, 1.05, 1] }}
-                      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                      className="absolute inset-0 rounded-full bg-primary/20 blur-sm group-hover:bg-primary/35 transition-colors"
-                    />
-                    <div className="relative flex size-20 items-center justify-center rounded-full border-2 border-primary bg-secondary overflow-hidden text-2xl font-black text-foreground shadow-[0_0_20px_oklch(0.58_0.23_250_/_0.3)] hover:opacity-90 transition-opacity">
-                      {user.avatarUrl ? (
-                        <img src={user.avatarUrl} alt="Avatar" className="size-full object-cover" />
-                      ) : (
-                        user.avatar
-                      )}
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Plus className="size-5 text-white" />
-                      </div>
+                  <motion.div
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                    className="absolute inset-0 rounded-full bg-primary/20 blur-sm pointer-events-none"
+                  />
+                  
+                  {/* Click avatar to Zoom */}
+                  <div
+                    onClick={() => setZoomAvatar(true)}
+                    className="relative flex size-20 cursor-zoom-in items-center justify-center rounded-full border-2 border-primary bg-secondary overflow-hidden text-2xl font-black text-foreground shadow-[0_0_20px_oklch(0.58_0.23_250_/_0.3)] hover:opacity-90 transition-opacity group"
+                    title="Clicca per ingrandire"
+                  >
+                    {user.avatarUrl ? (
+                      <img src={user.avatarUrl} alt="Avatar" className="size-full object-cover" />
+                    ) : (
+                      user.avatar
+                    )}
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Maximize2 className="size-5 text-white" />
                     </div>
+                  </div>
+
+                  {/* Plus badge on bottom-right to upload new image */}
+                  <label
+                    htmlFor="avatar-upload"
+                    className="absolute bottom-0 right-0 z-20 flex size-6 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md hover:scale-115 transition-transform"
+                    title="Carica nuova foto"
+                  >
+                    <Plus className="size-3.5" />
                   </label>
                 </div>
 
@@ -518,6 +532,43 @@ export function ProfileView({
           </p>
         </div>
       </motion.div>
+
+      {/* Avatar Zoom Overlay Modal */}
+      <AnimatePresence>
+        {zoomAvatar && (
+          <motion.div
+            key="own-avatar-zoom"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setZoomAvatar(false)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md cursor-zoom-out"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 15 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-sm w-full aspect-square rounded-3xl overflow-hidden border border-border bg-card shadow-2xl"
+            >
+              {user.avatarUrl ? (
+                <img src={user.avatarUrl} alt="Avatar Ingrandito" className="size-full object-cover" />
+              ) : (
+                <div className="flex size-full items-center justify-center bg-secondary text-5xl font-black">
+                  {user.avatar}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => setZoomAvatar(false)}
+                className="absolute right-4 top-4 flex size-8 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+              >
+                <X className="size-4" />
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   )
 }

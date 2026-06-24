@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Trophy, Users, Award, ArrowLeft, Key, Plus, Copy, Check, AlertCircle, Sparkles, ChevronRight, CalendarDays } from 'lucide-react'
+import { Trophy, Users, Award, ArrowLeft, Key, Plus, Copy, Check, AlertCircle, Sparkles, ChevronRight, CalendarDays, X, Maximize2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { League } from './profile-view'
 import { LEADERBOARD, UPCOMING_MATCHES, type Match, mapBackendMatch } from './data'
@@ -41,6 +41,46 @@ export function LeaguesView({
   const [joinError, setJoinError] = useState<string | null>(null)
   const [createError, setCreateError] = useState<string | null>(null)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
+
+  // Other user profile modal state
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [selectedUserProfile, setSelectedUserProfile] = useState<any | null>(null)
+  const [userProfileLoading, setUserProfileLoading] = useState(false)
+  const [zoomOtherAvatar, setZoomOtherAvatar] = useState(false)
+
+  // Fetch selected user's profile details
+  useEffect(() => {
+    if (!selectedUserId || !user.token) {
+      setSelectedUserProfile(null)
+      return
+    }
+
+    let active = true
+    setUserProfileLoading(true)
+    fetch(`${API_URL}/api/users/profile/${selectedUserId}`, {
+      headers: {
+        Authorization: `Bearer ${user.token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (active) {
+          if (data && !data.error) {
+            setSelectedUserProfile(data)
+          } else {
+            console.error('Error fetching user profile:', data.error)
+          }
+        }
+      })
+      .catch((err) => console.error('Error fetching user profile:', err))
+      .finally(() => {
+        if (active) setUserProfileLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [selectedUserId, user.token])
 
   // Real-time states
   const [leaderboard, setLeaderboard] = useState<any[]>([])
@@ -155,25 +195,35 @@ export function LeaguesView({
     setTimeout(() => setCopiedCode(null), 2000)
   }
 
-  // Group matches by matchday (giornata) for the predictions sub-tab
-  const matchdays = useMemo(() => {
-    const days = leagueMatches.map((m) => m.matchday)
-    return Array.from(new Set(days)).sort((a, b) => a - b)
+  // Group matches by phase for the predictions sub-tab
+  const phases = useMemo(() => {
+    const order = [
+      'Gironi (G1)',
+      'Gironi (G2)',
+      'Gironi (G3)',
+      'Sedicesimi',
+      'Ottavi',
+      'Quarti',
+      'Semifinale',
+      'Finale'
+    ]
+    const unique = Array.from(new Set(leagueMatches.map((m) => m.phase)))
+    return order.filter((p) => unique.includes(p))
   }, [leagueMatches])
 
-  const [selectedMatchday, setSelectedMatchday] = useState<number>(1)
+  const [selectedPhase, setSelectedPhase] = useState<string>('Gironi (G1)')
   const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null)
 
-  // Sync selected matchday with available matchdays if needed
+  // Sync selected phase with available phases if needed
   useEffect(() => {
-    if (matchdays.length > 0 && !matchdays.includes(selectedMatchday)) {
-      setSelectedMatchday(matchdays[0])
+    if (phases.length > 0 && !phases.includes(selectedPhase)) {
+      setSelectedPhase(phases[0])
     }
-  }, [matchdays, selectedMatchday])
+  }, [phases, selectedPhase])
 
   const filteredMatches = useMemo(() => {
-    return leagueMatches.filter((m) => m.matchday === selectedMatchday)
-  }, [leagueMatches, selectedMatchday])
+    return leagueMatches.filter((m) => m.phase === selectedPhase)
+  }, [leagueMatches, selectedPhase])
 
   const handleJoinSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -554,10 +604,12 @@ export function LeaguesView({
                           key={member.id}
                           initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
+                          onClick={() => setSelectedUserId(member.id)}
                           className={cn(
-                            'flex items-center gap-3 rounded-2xl border px-4 py-3 transition-colors duration-200',
+                            'flex items-center gap-3 rounded-2xl border px-4 py-3 transition-colors duration-200 cursor-pointer hover:bg-muted/10',
                             cardClass
                           )}
+                          title="Clicca per vedere il profilo"
                         >
                           {rankBadge}
                           
@@ -595,16 +647,16 @@ export function LeaguesView({
                 ) : (
                   <div className="flex flex-col gap-4">
                     {/* Matchday Select in League */}
-                    {matchdays.length > 0 && (
+                    {phases.length > 0 && (
                       <div className="flex gap-2 border-b border-border/20 pb-2 overflow-x-auto no-scrollbar">
-                        {matchdays.map((day) => {
-                          const isActive = selectedMatchday === day
+                        {phases.map((phase) => {
+                          const isActive = selectedPhase === phase
                           return (
                             <button
-                              key={day}
+                              key={phase}
                               type="button"
                               onClick={() => {
-                                setSelectedMatchday(day)
+                                setSelectedPhase(phase)
                                 setExpandedMatchId(null)
                               }}
                               className={cn(
@@ -619,7 +671,7 @@ export function LeaguesView({
                                   transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                                 />
                               )}
-                              <span className="relative z-10">Giornata {day}</span>
+                              <span className="relative z-10">{phase}</span>
                             </button>
                           )
                         })}
@@ -630,7 +682,7 @@ export function LeaguesView({
                     <ul className="flex flex-col gap-4 max-w-md mx-auto w-full list-none pl-0">
                       {filteredMatches.length === 0 ? (
                         <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground text-xs">
-                          Nessuna partita in programma per la Giornata {selectedMatchday}.
+                          Nessuna partita in programma per la fase {selectedPhase}.
                         </div>
                       ) : (
                         filteredMatches.map((match, idx) => (
@@ -651,6 +703,154 @@ export function LeaguesView({
                 )
               )}
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Other User Profile Modal */}
+      <AnimatePresence>
+        {selectedUserId && (
+          <motion.div
+            key="member-profile-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedUserId(null)}
+            className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 15 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-sm rounded-3xl border border-border bg-card p-6 shadow-2xl overflow-hidden"
+            >
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => setSelectedUserId(null)}
+                className="absolute right-4 top-4 flex size-8 items-center justify-center rounded-full border border-border bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors z-50"
+              >
+                <X className="size-4" />
+              </button>
+
+              {userProfileLoading ? (
+                <div className="flex justify-center py-12">
+                  <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent shadow-[0_0_12px_oklch(0.58_0.23_250_/_0.3)]" />
+                </div>
+              ) : selectedUserProfile ? (
+                <div className="flex flex-col items-center text-center">
+                  {/* Avatar */}
+                  <div className="relative mb-4 group cursor-pointer" onClick={() => setZoomOtherAvatar(true)}>
+                    <motion.div
+                      animate={{ scale: [1, 1.03, 1] }}
+                      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                      className="absolute inset-0 rounded-full bg-primary/20 blur-sm group-hover:bg-primary/30 transition-colors"
+                    />
+                    <div className="relative flex size-20 items-center justify-center rounded-full border-2 border-primary bg-secondary overflow-hidden text-2xl font-black text-foreground shadow-[0_0_20px_oklch(0.58_0.23_250_/_0.3)] hover:opacity-95 transition-opacity">
+                      {selectedUserProfile.avatarUrl ? (
+                        <img src={selectedUserProfile.avatarUrl} alt="Avatar" className="size-full object-cover" />
+                      ) : (
+                        selectedUserProfile.nickname
+                          .split(' ')
+                          .map((n: string) => n[0])
+                          .join('')
+                          .toUpperCase()
+                          .slice(0, 2) || 'US'
+                      )}
+                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Maximize2 className="size-4 text-white" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <h3 className="text-xl font-extrabold tracking-tight text-foreground">
+                    {selectedUserProfile.nickname}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">Profilo Giocatore</p>
+
+                  {/* Profile Statistics Grid */}
+                  <div className="mt-5 grid w-full grid-cols-2 gap-3 rounded-2xl border border-border/40 bg-background/50 p-3">
+                    <div className="flex flex-col items-center">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Punti</span>
+                      <span className="mt-1 text-lg font-black text-primary tabular-nums">
+                        {(selectedUserProfile.totalPoints ?? 0).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-center border-l border-border/40">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Rango Global</span>
+                      <span className="mt-1 flex items-center gap-0.5 text-lg font-black text-amber-500">
+                        <Award className="size-4 shrink-0 text-amber-500" />
+                        #{selectedUserProfile.leagues?.find((l: any) => l.name === 'Global League' || l.id === 'GLOBAL26')?.rank ?? 1}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Leagues list */}
+                  <div className="mt-5 w-full text-left">
+                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                      Partecipazioni Leghe
+                    </h4>
+                    <div className="max-h-40 overflow-y-auto no-scrollbar space-y-2">
+                      {!selectedUserProfile.leagues || selectedUserProfile.leagues.length === 0 ? (
+                        <p className="text-xs text-muted-foreground italic">Non fa parte di nessuna lega.</p>
+                      ) : (
+                        selectedUserProfile.leagues.map((l: any) => (
+                          <div key={l.id} className="flex items-center justify-between p-2.5 rounded-xl border border-border bg-card/40 text-xs">
+                            <span className="font-bold text-foreground truncate max-w-[180px]">{l.name}</span>
+                            <span className="text-muted-foreground">Rango: <strong className="text-primary">#{l.rank}</strong> ({l.points} pts)</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-8 text-center text-muted-foreground text-sm">
+                  Impossibile caricare il profilo dell'utente.
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Zoomed Avatar overlay for other user */}
+        {zoomOtherAvatar && selectedUserProfile && (
+          <motion.div
+            key="member-avatar-zoom"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setZoomOtherAvatar(false)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md cursor-zoom-out"
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-sm w-full aspect-square rounded-3xl overflow-hidden border border-border bg-card shadow-2xl"
+            >
+              {selectedUserProfile.avatarUrl ? (
+                <img src={selectedUserProfile.avatarUrl} alt="Avatar Ingrandito" className="size-full object-cover" />
+              ) : (
+                <div className="flex size-full items-center justify-center bg-secondary text-5xl font-black">
+                  {selectedUserProfile.nickname
+                    .split(' ')
+                    .map((n: string) => n[0])
+                    .join('')
+                    .toUpperCase()
+                    .slice(0, 2) || 'US'}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => setZoomOtherAvatar(false)}
+                className="absolute right-4 top-4 flex size-8 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+              >
+                <X className="size-4" />
+              </button>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

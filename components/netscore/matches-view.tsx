@@ -57,24 +57,34 @@ export function MatchesView({
     }
   }, [user?.token, selectedLeagueId])
 
-  // Find all unique matchdays
-  const matchdays = useMemo(() => {
-    const days = matches.map((m) => m.matchday)
-    return Array.from(new Set(days)).sort((a, b) => a - b)
+  // Find all unique phases in defined order
+  const phases = useMemo(() => {
+    const order = [
+      'Gironi (G1)',
+      'Gironi (G2)',
+      'Gironi (G3)',
+      'Sedicesimi',
+      'Ottavi',
+      'Quarti',
+      'Semifinale',
+      'Finale'
+    ]
+    const unique = Array.from(new Set(matches.map((m) => m.phase)))
+    return order.filter((p) => unique.includes(p))
   }, [matches])
 
-  const [selectedMatchday, setSelectedMatchday] = useState<number>(1)
+  const [selectedPhase, setSelectedPhase] = useState<string>('Gironi (G1)')
 
-  // Sync selected matchday with available matchdays if needed
+  // Sync selected phase with available phases if needed
   useEffect(() => {
-    if (matchdays.length > 0 && !matchdays.includes(selectedMatchday)) {
-      setSelectedMatchday(matchdays[0])
+    if (phases.length > 0 && !phases.includes(selectedPhase)) {
+      setSelectedPhase(phases[0])
     }
-  }, [matchdays, selectedMatchday])
+  }, [phases, selectedPhase])
 
   const filteredMatches = useMemo(() => {
-    return matches.filter((m) => m.matchday === selectedMatchday)
-  }, [matches, selectedMatchday])
+    return matches.filter((m) => m.phase === selectedPhase)
+  }, [matches, selectedPhase])
 
   return (
     <section className="px-5 py-5">
@@ -87,7 +97,7 @@ export function MatchesView({
             FIFA World Cup 26™ Matches
           </h1>
           <p className="text-sm text-muted-foreground">
-            Lock in your scores for each Matchday (Giornata) before kickoff.
+            Lock in your scores for each tournament stage before kickoff.
           </p>
         </motion.div>
 
@@ -117,16 +127,16 @@ export function MatchesView({
       </div>
 
       {/* Matchday Tabs / Sub-nav */}
-      {matchdays.length > 0 && (
+      {phases.length > 0 && (
         <div className="mb-6 flex gap-2 border-b border-border/40 pb-2 overflow-x-auto no-scrollbar">
-          {matchdays.map((day) => {
-            const isActive = selectedMatchday === day
+          {phases.map((phase) => {
+            const isActive = selectedPhase === phase
             return (
               <button
-                key={day}
+                key={phase}
                 type="button"
                 onClick={() => {
-                  setSelectedMatchday(day)
+                  setSelectedPhase(phase)
                   setExpandedId(null) // collapse open cards when switching days
                 }}
                 className={cn(
@@ -141,7 +151,7 @@ export function MatchesView({
                     transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                   />
                 )}
-                <span className="relative z-10">Giornata {day}</span>
+                <span className="relative z-10">{phase}</span>
               </button>
             )
           })}
@@ -151,7 +161,7 @@ export function MatchesView({
       {/* Matches Grid */}
       <AnimatePresence mode="wait">
         <motion.ul
-          key={selectedMatchday}
+          key={selectedPhase}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
@@ -164,7 +174,7 @@ export function MatchesView({
             </div>
           ) : filteredMatches.length === 0 ? (
             <div className="col-span-full rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
-              Nessuna partita in programma per la Giornata {selectedMatchday}.
+              Nessuna partita in programma per la fase {selectedPhase}.
             </div>
           ) : (
             filteredMatches.map((match, index) => (

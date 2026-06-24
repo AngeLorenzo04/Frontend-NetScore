@@ -265,7 +265,7 @@ export function NetScoreApp() {
     )
   }
 
-  if (!inPlatform) {
+  if (!inPlatform || !user) {
     return (
       <>
         <Homepage

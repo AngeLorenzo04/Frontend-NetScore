@@ -13,6 +13,7 @@ export type Match = {
   venue: string
   stage: string
   matchday: number
+  phase: string
 }
 
 export type LeaderUser = {
@@ -45,6 +46,7 @@ export const UPCOMING_MATCHES: Match[] = [
     venue: 'MetLife Stadium, NJ',
     stage: 'Group A',
     matchday: 1,
+    phase: 'Gironi (G1)',
   },
   {
     id: 'm2',
@@ -54,6 +56,7 @@ export const UPCOMING_MATCHES: Match[] = [
     venue: 'SoFi Stadium, LA',
     stage: 'Group C',
     matchday: 1,
+    phase: 'Gironi (G1)',
   },
   {
     id: 'm3',
@@ -63,6 +66,7 @@ export const UPCOMING_MATCHES: Match[] = [
     venue: 'AT&T Stadium, Dallas',
     stage: 'Group B',
     matchday: 2,
+    phase: 'Gironi (G2)',
   },
   {
     id: 'm4',
@@ -72,6 +76,7 @@ export const UPCOMING_MATCHES: Match[] = [
     venue: 'Estadio Azteca, MX',
     stage: 'Group D',
     matchday: 2,
+    phase: 'Gironi (G2)',
   },
   {
     id: 'm5',
@@ -81,6 +86,7 @@ export const UPCOMING_MATCHES: Match[] = [
     venue: 'BC Place, Vancouver',
     stage: 'Group F',
     matchday: 3,
+    phase: 'Gironi (G3)',
   },
 ]
 
@@ -238,6 +244,42 @@ function formatKickoff(date: Date): string {
   }
 }
 
+export function getPhaseForMatch(date: Date): string {
+  const time = date.getTime();
+  const tGironiEnd = new Date('2026-06-28T10:00:00Z').getTime();
+  const tSedicesimiEnd = new Date('2026-07-04T10:00:00Z').getTime();
+  const tOttaviEnd = new Date('2026-07-08T10:00:00Z').getTime();
+  const tQuartiEnd = new Date('2026-07-13T10:00:00Z').getTime();
+  const tSemifinaleEnd = new Date('2026-07-16T10:00:00Z').getTime();
+
+  if (time < tGironiEnd) {
+    const day = date.getUTCDate();
+    const month = date.getUTCMonth() + 1;
+    if (month === 6) {
+      if (day <= 18) {
+        if (day === 18 && date.getUTCHours() >= 10) return 'Gironi (G2)';
+        return 'Gironi (G1)';
+      }
+      if (day <= 23) {
+        if (day === 23 && date.getUTCHours() >= 10) return 'Gironi (G3)';
+        return 'Gironi (G2)';
+      }
+      return 'Gironi (G3)';
+    }
+    return 'Gironi (G1)';
+  } else if (time < tSedicesimiEnd) {
+    return 'Sedicesimi';
+  } else if (time < tOttaviEnd) {
+    return 'Ottavi';
+  } else if (time < tQuartiEnd) {
+    return 'Quarti';
+  } else if (time < tSemifinaleEnd) {
+    return 'Semifinale';
+  } else {
+    return 'Finale';
+  }
+}
+
 export function mapBackendMatch(backendMatch: any): Match & { status: string, homeGoals: number | null, awayGoals: number | null, prediction: any } {
   const start = new Date(backendMatch.startTime);
   return {
@@ -248,6 +290,7 @@ export function mapBackendMatch(backendMatch: any): Match & { status: string, ho
     venue: getVenueForTeam(backendMatch.homeTeam),
     stage: getStageForMatch(start),
     matchday: getMatchdayForDate(start),
+    phase: getPhaseForMatch(start),
     status: backendMatch.status,
     homeGoals: backendMatch.homeGoals,
     awayGoals: backendMatch.awayGoals,
