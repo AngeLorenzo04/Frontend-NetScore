@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 
 export type TabId = 'matches' | 'leaderboard' | 'profile'
 
-const TABS: { id: TabId; label: string; icon: typeof CalendarDays }[] = [
+export const TABS: { id: TabId; label: string; icon: typeof CalendarDays }[] = [
   { id: 'matches', label: 'Matches', icon: CalendarDays },
   { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
   { id: 'profile', label: 'Profile', icon: User },

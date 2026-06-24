@@ -8,6 +8,7 @@ import { MatchesView } from './matches-view'
 import { LeaderboardView } from './leaderboard-view'
 import { ProfileView } from './profile-view'
 import { Toast } from './toast'
+import { cn } from '@/lib/utils'
 
 export function NetScoreApp() {
   const [tab, setTab] = useState<TabId>('matches')
@@ -79,6 +80,7 @@ export function NetScoreApp() {
 
       <Toast message={toast} />
       <BottomNav active={tab} onChange={setTab} className="md:hidden" />
+    </div>
     </div>
   )
 }
