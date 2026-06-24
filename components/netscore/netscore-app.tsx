@@ -170,6 +170,41 @@ export function NetScoreApp() {
     [user, fetchProfile, showToast],
   )
 
+  const handleUpdateProfile = useCallback(
+    async (nickname: string, email: string, password?: string): Promise<string | null> => {
+      if (!user || !user.token) return 'Non autenticato'
+
+      try {
+        const body: any = { nickname, email }
+        if (password) {
+          body.password = password
+        }
+
+        const res = await fetch('http://localhost:3000/api/users/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user.token}`,
+          },
+          body: JSON.stringify(body),
+        })
+
+        const data = await res.json()
+        if (!res.ok) {
+          return data.error || 'Impossibile aggiornare il profilo'
+        }
+
+        await fetchProfile(user.token)
+        showToast('Profilo aggiornato con successo')
+        return null
+      } catch (err) {
+        console.error(err)
+        return 'Errore di connessione'
+      }
+    },
+    [user, fetchProfile, showToast],
+  )
+
   const handleLogout = useCallback(() => {
     saveUser(null)
     showToast('Logged out successfully')
@@ -315,6 +350,7 @@ export function NetScoreApp() {
                   onLogout={handleLogout}
                   onJoinLeague={handleJoinLeague}
                   onCreateLeague={handleCreateLeague}
+                  onUpdateProfile={handleUpdateProfile}
                 />
               )}
             </motion.div>

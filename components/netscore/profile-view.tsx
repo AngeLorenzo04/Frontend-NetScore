@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { User, Plus, Key, Trophy, LogOut, Check, Copy, AlertCircle, Sparkles, Users, Award } from 'lucide-react'
+import { User, Plus, Key, Trophy, LogOut, Check, Copy, AlertCircle, Sparkles, Users, Award, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface League {
@@ -25,6 +25,7 @@ export function ProfileView({
   onLogout = () => {},
   onJoinLeague = async () => null,
   onCreateLeague = async () => null,
+  onUpdateProfile = async () => null,
 }: {
   user?: {
     name: string
@@ -36,6 +37,7 @@ export function ProfileView({
   onLogout?: () => void
   onJoinLeague?: (code: string) => Promise<string | null>
   onCreateLeague?: (name: string) => Promise<string | null>
+  onUpdateProfile?: (nickname: string, email: string, password?: string) => Promise<string | null>
 }) {
   const [showJoinForm, setShowJoinForm] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -44,6 +46,36 @@ export function ProfileView({
   const [joinError, setJoinError] = useState<string | null>(null)
   const [createError, setCreateError] = useState<string | null>(null)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
+
+  const [isEditing, setIsEditing] = useState(false)
+  const [editNickname, setEditNickname] = useState(user.name)
+  const [editEmail, setEditEmail] = useState(user.email)
+  const [editPassword, setEditPassword] = useState('')
+  const [editError, setEditError] = useState<string | null>(null)
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editNickname.trim()) {
+      setEditError('Il nickname non può essere vuoto')
+      return
+    }
+    if (!editEmail.trim()) {
+      setEditError("L'email non può essere vuota")
+      return
+    }
+    const err = await onUpdateProfile(
+      editNickname.trim(),
+      editEmail.trim(),
+      editPassword.trim() ? editPassword.trim() : undefined
+    )
+    if (err) {
+      setEditError(err)
+    } else {
+      setIsEditing(false)
+      setEditPassword('')
+      setEditError(null)
+    }
+  }
 
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code)
@@ -99,45 +131,121 @@ export function ProfileView({
           <div className="absolute -right-16 -top-16 size-36 rounded-full bg-primary/10 blur-2xl" />
           <div className="absolute -left-16 -bottom-16 size-36 rounded-full bg-accent/10 blur-2xl" />
 
+          {!isEditing && (
+            <button
+              type="button"
+              onClick={() => {
+                setIsEditing(true)
+                setEditNickname(user.name)
+                setEditEmail(user.email)
+                setEditPassword('')
+                setEditError(null)
+              }}
+              className="absolute top-4 right-4 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
+              title="Edit Profile"
+            >
+              <Settings className="size-5" />
+            </button>
+          )}
+
           <div className="relative flex flex-col items-center text-center">
-            {/* Avatar with animated glowing rings */}
-            <div className="relative mb-4">
-              <motion.div
-                animate={{ scale: [1, 1.05, 1] }}
-                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                className="absolute inset-0 rounded-full bg-primary/20 blur-sm"
-              />
-              <div className="relative flex size-20 items-center justify-center rounded-full border-2 border-primary bg-secondary text-2xl font-black text-foreground shadow-[0_0_20px_oklch(0.58_0.23_250_/_0.3)]">
-                {user.avatar}
-              </div>
-            </div>
+            {isEditing ? (
+              <form onSubmit={handleEditSubmit} className="w-full flex flex-col gap-3 text-left">
+                <h3 className="text-base font-bold text-foreground">Modifica Profilo</h3>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Nickname</label>
+                  <input
+                    type="text"
+                    value={editNickname}
+                    onChange={(e) => setEditNickname(e.target.value)}
+                    className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm font-semibold text-foreground outline-none focus:border-primary"
+                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Email</label>
+                  <input
+                    type="email"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm font-semibold text-foreground outline-none focus:border-primary"
+                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Nuova Password (opzionale)</label>
+                  <input
+                    type="password"
+                    placeholder="Lascia vuoto per non cambiare"
+                    value={editPassword}
+                    onChange={(e) => setEditPassword(e.target.value)}
+                    className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm font-semibold text-foreground outline-none focus:border-primary"
+                  />
+                </div>
+                {editError && (
+                  <span className="flex items-center gap-1 text-xs font-semibold text-accent mt-0.5">
+                    <AlertCircle className="size-3.5" />
+                    {editError}
+                  </span>
+                )}
+                <div className="flex justify-end gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(false)}
+                    className="h-9 rounded-xl px-4 text-xs font-bold text-muted-foreground hover:bg-secondary transition-colors"
+                  >
+                    Annulla
+                  </button>
+                  <button
+                    type="submit"
+                    className="h-9 rounded-xl bg-primary px-4 text-xs font-bold text-primary-foreground shadow-[0_0_12px_oklch(0.58_0.23_250_/_0.4)]"
+                  >
+                    Salva
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <>
+                {/* Avatar with animated glowing rings */}
+                <div className="relative mb-4">
+                  <motion.div
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                    className="absolute inset-0 rounded-full bg-primary/20 blur-sm"
+                  />
+                  <div className="relative flex size-20 items-center justify-center rounded-full border-2 border-primary bg-secondary text-2xl font-black text-foreground shadow-[0_0_20px_oklch(0.58_0.23_250_/_0.3)]">
+                    {user.avatar}
+                  </div>
+                </div>
 
-            <h1 className="text-2xl font-extrabold tracking-tight text-foreground">{user.name}</h1>
-            <p className="text-sm text-muted-foreground">{user.email}</p>
+                <h1 className="text-2xl font-extrabold tracking-tight text-foreground">{user.name}</h1>
+                <p className="text-sm text-muted-foreground">{user.email}</p>
 
-            {/* Profile Statistics Grid */}
-            <div className="mt-6 grid w-full grid-cols-3 gap-3 rounded-2xl border border-border/40 bg-background/50 p-3">
-              <div className="flex flex-col items-center">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Points</span>
-                <span className="mt-1 text-lg font-black text-primary tabular-nums">
-                  {user.points.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex flex-col items-center border-x border-border/40">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Global Rank</span>
-                <span className="mt-1 flex items-center gap-0.5 text-lg font-black text-gold">
-                  <Award className="size-4 shrink-0 text-gold" />
-                  #9
-                </span>
-              </div>
-              <div className="flex flex-col items-center">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Accuracy</span>
-                <span className="mt-1 flex items-center gap-0.5 text-lg font-black text-neon-cyan">
-                  <Sparkles className="size-3.5 text-neon-cyan" />
-                  68%
-                </span>
-              </div>
-            </div>
+                {/* Profile Statistics Grid */}
+                <div className="mt-6 grid w-full grid-cols-3 gap-3 rounded-2xl border border-border/40 bg-background/50 p-3">
+                  <div className="flex flex-col items-center">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Points</span>
+                    <span className="mt-1 text-lg font-black text-primary tabular-nums">
+                      {user.points.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-center border-x border-border/40">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Global Rank</span>
+                    <span className="mt-1 flex items-center gap-0.5 text-lg font-black text-gold">
+                      <Award className="size-4 shrink-0 text-gold" />
+                      #{user.leagues.find(l => l.code === 'GLOBAL26')?.rank ?? 1}
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Accuracy</span>
+                    <span className="mt-1 flex items-center gap-0.5 text-lg font-black text-neon-cyan">
+                      <Sparkles className="size-3.5 text-neon-cyan" />
+                      68%
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
