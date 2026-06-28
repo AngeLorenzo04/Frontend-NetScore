@@ -55,6 +55,7 @@ export function NetScoreApp() {
   const fetchProfile = useCallback(async (token: string) => {
     try {
       const res = await fetch(`${API_URL}/api/users/profile`, {
+        cache: 'no-store',
         headers: {
           Authorization: `Bearer ${token}`,
         },

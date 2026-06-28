@@ -61,6 +61,7 @@ export function LeaguesView({
     let active = true
     setUserProfileLoading(true)
     fetch(`${API_URL}/api/users/profile/${selectedUserId}`, {
+      cache: 'no-store',
       headers: {
         Authorization: `Bearer ${user.token}`,
       },
@@ -106,6 +107,7 @@ export function LeaguesView({
     let active = true
     setLeaderboardLoading(true)
     fetch(`${API_URL}/api/leagues/${selectedLeagueId}/leaderboard`, {
+      cache: 'no-store',
       headers: {
         Authorization: `Bearer ${user.token}`,
       },
@@ -171,6 +173,7 @@ export function LeaguesView({
     let active = true
     setMatchesLoading(true)
     fetch(`${API_URL}/api/matches?leagueId=${selectedLeagueId}`, {
+      cache: 'no-store',
       headers: {
         Authorization: `Bearer ${user.token}`,
       },

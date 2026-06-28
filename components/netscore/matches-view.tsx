@@ -37,6 +37,7 @@ export function MatchesView({
       : `${apiUrl}/api/matches`
 
     fetch(url, {
+      cache: 'no-store',
       headers: {
         Authorization: `Bearer ${user.token}`,
       },
