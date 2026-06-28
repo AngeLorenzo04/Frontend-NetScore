@@ -33,8 +33,8 @@ export function MatchesView({
     
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
     const url = selectedLeagueId
-      ? `${apiUrl}/api/matches?leagueId=${selectedLeagueId}`
-      : `${apiUrl}/api/matches`
+      ? `${apiUrl}/api/matches?leagueId=${selectedLeagueId}&t=${Date.now()}`
+      : `${apiUrl}/api/matches?t=${Date.now()}`
 
     fetch(url, {
       cache: 'no-store',

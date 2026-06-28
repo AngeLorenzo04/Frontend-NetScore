@@ -54,7 +54,7 @@ export function NetScoreApp() {
   // Fetch updated user profile and leagues list
   const fetchProfile = useCallback(async (token: string) => {
     try {
-      const res = await fetch(`${API_URL}/api/users/profile`, {
+      const res = await fetch(`${API_URL}/api/users/profile?t=${Date.now()}`, {
         cache: 'no-store',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -114,6 +114,16 @@ export function NetScoreApp() {
     }
     setIsLoaded(true)
   }, [fetchProfile])
+
+  // Poll profile and leagues list every 20 seconds to keep everything fresh
+  useEffect(() => {
+    if (user?.token) {
+      const interval = setInterval(() => {
+        fetchProfile(user.token)
+      }, 20000)
+      return () => clearInterval(interval)
+    }
+  }, [user?.token, fetchProfile])
 
   const handleJoinLeague = useCallback(
     async (code: string): Promise<string | null> => {
