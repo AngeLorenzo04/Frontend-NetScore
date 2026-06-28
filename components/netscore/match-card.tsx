@@ -142,6 +142,7 @@ export function MatchCard({
   const isFinished = match.status === 'FINISHED'
   const isTBD = (match.home.name && match.home.name.toUpperCase() === 'TBD') || 
                 (match.away.name && match.away.name.toUpperCase() === 'TBD')
+  const isStarted = match.status !== 'SCHEDULED' || (match.startTime && new Date() >= new Date(match.startTime))
 
   return (
     <motion.li
@@ -162,7 +163,7 @@ export function MatchCard({
         </span>
         <span className="flex items-center gap-1 text-xs font-semibold text-accent">
           <Clock className="size-3" />
-          {isFinished ? 'Terminata' : match.kickoff}
+          {isFinished ? 'Terminata' : isStarted ? 'In Corso' : match.kickoff}
         </span>
       </div>
 
@@ -197,6 +198,18 @@ export function MatchCard({
             ) : (
               <div className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-card/30 py-3 text-xs text-muted-foreground">
                 Nessuna predizione effettuata
+              </div>
+            )}
+          </div>
+        ) : isStarted ? (
+          <div className="flex flex-col gap-2">
+            {match.prediction ? (
+              <div className="flex items-center justify-center gap-2 rounded-2xl border border-border bg-secondary/35 py-3 text-sm font-bold text-muted-foreground">
+                Predizione: {match.prediction.predictedHome} – {match.prediction.predictedAway} (Chiuso)
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-card/30 py-3 text-xs text-muted-foreground">
+                Pronostici chiusi (Nessun pronostico)
               </div>
             )}
           </div>
@@ -244,7 +257,7 @@ export function MatchCard({
         )}
 
         <AnimatePresence initial={false}>
-          {expanded && status !== 'done' && !isFinished && !isTBD && (
+          {expanded && status !== 'done' && !isFinished && !isStarted && !isTBD && (
             <motion.div
               key="predict"
               initial={{ height: 0, opacity: 0 }}

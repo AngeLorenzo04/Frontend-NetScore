@@ -290,7 +290,7 @@ export function getPhaseForMatch(date: Date): string {
   }
 }
 
-export function mapBackendMatch(backendMatch: any): Match & { status: string, homeGoals: number | null, awayGoals: number | null, prediction: any } {
+export function mapBackendMatch(backendMatch: any): Match & { startTime: string, status: string, homeGoals: number | null, awayGoals: number | null, prediction: any } {
   const start = new Date(backendMatch.startTime);
   return {
     id: backendMatch.id,
@@ -301,6 +301,7 @@ export function mapBackendMatch(backendMatch: any): Match & { status: string, ho
     stage: getStageForMatch(start),
     matchday: getMatchdayForDate(start),
     phase: getPhaseForMatch(start),
+    startTime: backendMatch.startTime,
     status: backendMatch.status,
     homeGoals: backendMatch.homeGoals,
     awayGoals: backendMatch.awayGoals,
